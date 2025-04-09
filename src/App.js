@@ -46,7 +46,7 @@ function App() {
       <div className="header">
         <div className="logo-container">
           <img 
-            src="/images/neurolens-logo.png" 
+            src="/images/Neurolens Aligned Eye Blue PNG.png" 
             alt="Neurolens - Relief is in Sight" 
             className="company-logo" 
           />
