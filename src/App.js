@@ -33,12 +33,12 @@ function App() {
 
   // Daily activity data
   const dailyData = [
-    { name: 'Mon 03/24', measurements: 34, portalViews: 27, highSx: 14, orders: 0 },
-    { name: 'Tue 03/25', measurements: 28, portalViews: 21, highSx: 7, orders: 0 },
-    { name: 'Wed 03/26', measurements: 32, portalViews: 23, highSx: 9, orders: 3 },
-    { name: 'Thu 03/27', measurements: 32, portalViews: 25, highSx: 15, orders: 1 },
-    { name: 'Fri 03/28', measurements: 0, portalViews: 0, highSx: 0, orders: 0 },
-    { name: 'Sat 03/29', measurements: 0, portalViews: 0, highSx: 0, orders: 0 }
+    { name: '3/24', measurements: 34, portalViews: 27, highSx: 14, orders: 0 },
+    { name: '3/25', measurements: 28, portalViews: 21, highSx: 7, orders: 0 },
+    { name: '3/26', measurements: 32, portalViews: 23, highSx: 9, orders: 3 },
+    { name: '3/27', measurements: 32, portalViews: 25, highSx: 15, orders: 1 },
+    { name: '3/28', measurements: 0, portalViews: 0, highSx: 0, orders: 0 },
+    { name: '3/29', measurements: 0, portalViews: 0, highSx: 0, orders: 0 }
   ];
 
   return (
@@ -150,9 +150,26 @@ function App() {
             <XAxis dataKey="name" tick={{fill: '#aaa'}} />
             <YAxis tick={{fill: '#aaa'}} />
             <Tooltip 
-              contentStyle={{backgroundColor: '#222', borderColor: '#555'}} 
-              labelStyle={{color: '#ddd'}}
-              itemStyle={{color: '#ddd'}}
+              contentStyle={{
+                backgroundColor: '#222', 
+                borderColor: '#555',
+                fontSize: '12px',        // Reduce font size
+                padding: '5px 8px',      // Reduce padding
+                borderRadius: '4px',     // Optional: slightly rounded corners
+                boxShadow: '0 2px 4px rgba(0,0,0,0.3)'  // Optional: subtle shadow
+              }} 
+              labelStyle={{
+                display: 'none'          // Hide the date/label completely
+              }}
+              itemStyle={{
+                color: '#ddd',
+                fontSize: '12px',        // Ensure item text is also smaller
+                padding: '2px 0'         // Reduce spacing between items
+              }}
+              wrapperStyle={{
+                zIndex: 100             // Ensure tooltip stays on top
+              }}
+              formatter={(value) => value} // Just show the value
             />
             <Legend wrapperStyle={{color: '#aaa'}} />
             <Area type="monotone" dataKey="measurements" name="Measurements" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
