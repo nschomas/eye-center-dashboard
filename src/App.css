@@ -89,21 +89,38 @@ td {
   color: #6b7280;
 }
 
-/* Replace the previous logo styles with these */
+/* Update the logo styles in App.css */
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
 .logo-container {
-  text-align: center;
   margin-bottom: 10px;
 }
 
 .company-logo {
-  height: 50px; /* Fixed height to match header text */
+  height: 40px; /* Slightly smaller to match header text */
   width: auto;
   object-fit: contain;
 }
 
 @media (min-width: 768px) {
+  .header {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+  
   .logo-container {
-    text-align: left;
-    margin-bottom: 12px;
+    margin-right: 15px;
+    margin-bottom: 0;
+  }
+  
+  .header-text {
+    display: inline-block;
   }
 }
