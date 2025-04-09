@@ -88,3 +88,21 @@ td {
   font-size: 0.75rem;
   color: #6b7280;
 }
+
+/* Add to App.css */
+.logo-container {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.company-logo {
+  max-width: 300px;
+  height: auto;
+}
+
+@media (min-width: 768px) {
+  .logo-container {
+    text-align: left;
+    margin-bottom: 20px;
+  }
+}

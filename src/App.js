@@ -44,6 +44,13 @@ function App() {
   return (
     <div className="dashboard">
       <div className="header">
+      <div className="logo-container">
+        <img 
+          src="images\Neurolens Aligned Eye Blue PNG.png" 
+          alt="Neurolens - Relief is in Sight" 
+          className="company-logo" 
+        />
+      </div>
         <h1>Cheyne Eye Center - Prescriber Summary</h1>
         <p>Date Range: 3/24/25 - 3/29/25</p>
       </div>
