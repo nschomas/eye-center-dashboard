@@ -1,26 +1,59 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
          ResponsiveContainer, AreaChart, Area } from 'recharts';
 import './App.css';
 
 function App() {
-  // Prescriber data - sorted by High Sx Count (highest to lowest)
-  const prescriberData = [
-    { name: 'Manuel Debesa', shortName: 'M. Debesa', measurements: 27, portalViews: 27, highSx: 13, orders: 0 },
-    { name: 'Chris Cheyne', shortName: 'C. Cheyne', measurements: 18, portalViews: 18, highSx: 10, orders: 1 },
-    { name: 'Nicole Stout', shortName: 'N. Stout', measurements: 18, portalViews: 16, highSx: 9, orders: 0 },
-    { name: 'Courtney Cobbs', shortName: 'C. Cobbs', measurements: 21, portalViews: 19, highSx: 8, orders: 1 },
-    { name: 'Robert Yeaman', shortName: 'R. Yeaman', measurements: 16, portalViews: 16, highSx: 5, orders: 0 }
-  ];
-
-  // Get total known orders and patients helped
+  // Add state hooks for data loading
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // Use effect to fetch data on component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Get practiceId from URL query parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const practiceId = urlParams.get('practiceId') || '12345678-1234-1234-1234-123456789012'; // Default ID if none provided
+        
+        // Replace with your Power Automate flow URL
+        const response = await fetch('https://prod-121.westus.logic.azure.com:443/workflows/ae97f93478ea45a49447ed9b984d7971/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=jkNp7-6ahOHoHjc04gB07WLMOenNL37zsdrq7qWt7sg', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ practiceId })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setDashboardData(data);
+        setLoading(false);
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
+        setError(error.message);
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
+  
+  // Add loading and error states
+  if (loading) return <div className="loading">Loading dashboard data...</div>;
+  if (error) return <div className="error">Error: {error}</div>;
+  if (!dashboardData) return <div className="no-data">No data available</div>;
+  
+  // Extract data from API response
+  const { practiceName, dateRange, prescriberData, dailyData, patientsHelped } = dashboardData;
+  
+  // Calculate derived values
   const knownOrders = prescriberData.reduce((sum, item) => sum + item.orders, 0);
-  const patientsHelped = 4; // From the data
-  
-  // Calculate unknown/unmatched orders
   const unknownOrders = patientsHelped - knownOrders;
-  
-  // Add unknown prescriber data if there are unmatched orders
   const hasUnknownOrders = unknownOrders > 0;
   
   // Calculate totals for the table
@@ -28,19 +61,10 @@ function App() {
     measurements: prescriberData.reduce((sum, item) => sum + item.measurements, 0),
     portalViews: prescriberData.reduce((sum, item) => sum + item.portalViews, 0),
     highSx: prescriberData.reduce((sum, item) => sum + item.highSx, 0),
-    orders: patientsHelped // Total orders is the patients helped (includes unknown orders)
+    orders: patientsHelped
   };
 
-  // Daily activity data
-  const dailyData = [
-    { name: '3/24', measurements: 34, portalViews: 27, highSx: 14, orders: 0 },
-    { name: '3/25', measurements: 28, portalViews: 21, highSx: 7, orders: 0 },
-    { name: '3/26', measurements: 32, portalViews: 23, highSx: 9, orders: 3 },
-    { name: '3/27', measurements: 32, portalViews: 25, highSx: 15, orders: 1 },
-    { name: '3/28', measurements: 0, portalViews: 0, highSx: 0, orders: 0 },
-    { name: '3/29', measurements: 0, portalViews: 0, highSx: 0, orders: 0 }
-  ];
-
+  // The rest of your code remains the same
   return (
     <div className="dashboard">
       <div className="header">
@@ -52,8 +76,8 @@ function App() {
           />
           </div>
           <div className="header-text">
-            <h1>Cheyne Eye Center - Prescriber Summary</h1>
-            <p>Date Range: 3/24/25 - 3/29/25</p>
+            <h1>{practiceName} - Prescriber Summary</h1>
+            <p>Date Range: {dateRange}</p>
           </div>
       </div>
       
