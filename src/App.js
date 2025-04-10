@@ -15,7 +15,13 @@ function App() {
       try {
         // Get practiceId from URL query parameter
         const urlParams = new URLSearchParams(window.location.search);
-        const practiceId = urlParams.get('practiceId') || '12345678-1234-1234-1234-123456789012'; // Default ID if none provided
+        const practiceId = urlParams.get('practiceId');
+
+        if (!practiceId) {
+          setError('No practice ID provided. Please include a valid practice ID in the URL.');
+          setLoading(false);
+          return;
+        }
         
         // Replace with your Power Automate flow URL
         const response = await fetch('https://prod-121.westus.logic.azure.com:443/workflows/ae97f93478ea45a49447ed9b984d7971/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=jkNp7-6ahOHoHjc04gB07WLMOenNL37zsdrq7qWt7sg', {
@@ -44,8 +50,26 @@ function App() {
   }, []);
   
   // Add loading and error states
-  if (loading) return <div className="loading">Loading dashboard data...</div>;
-  if (error) return <div className="error">Error: {error}</div>;
+  if (loading) return (
+    <div className="loading-container">
+      <div className="loading-spinner"></div>
+      <p>Loading dashboard data...</p>
+    </div>
+  );
+  if (error) return (
+    <div className="error-container">
+      <h2>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        Error
+      </h2>
+      <p>{error}</p>
+      <p className="suggestion">Please check the URL and try again. If the problem persists, contact support.</p>
+    </div>
+  );
   if (!dashboardData) return <div className="no-data">No data available</div>;
   
   // Extract data from API response

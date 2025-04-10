@@ -127,3 +127,70 @@ td {
     width: 100%;
   }
 }
+
+/* Error and Loading States */
+.error-container {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 24px;
+  background-color: #1f2937;
+  border-radius: 12px;
+  border-left: 4px solid #ef4444;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.error-container h2 {
+  color: #ef4444;
+  font-size: 1.25rem;
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.error-container p {
+  color: #e2e8f0;
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.error-container .suggestion {
+  margin-top: 16px;
+  color: #9ca3af;
+  font-size: 0.875rem;
+}
+
+.loading-container {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 24px;
+  background-color: #1f2937;
+  border-radius: 12px;
+  border-left: 4px solid #60a5fa;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  text-align: center;
+}
+
+.loading-container p {
+  color: #e2e8f0;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  margin-right: 12px;
+  border: 3px solid #60a5fa;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
