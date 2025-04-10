@@ -100,7 +100,7 @@ function App() {
           />
           </div>
           <div className="header-text">
-            <h1>{practiceName} - Prescriber Summary</h1>
+            <h1>{practiceName} - Performance Summary</h1>
             <p>Date Range: {dateRange}</p>
           </div>
       </div>
