@@ -25,6 +25,9 @@ function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Check if we're on mobile
+  const isMobile = windowWidth <= 768;
+
   // Use effect to fetch data on component mount or when practiceId changes
   useEffect(() => {
     const fetchData = async () => {
@@ -171,44 +174,74 @@ function App() {
     return 40; // Default for desktop
   };
 
+  // Get adjusted margins for charts based on screen size
+  const getTopChartMargins = () => {
+    if (isMobile) {
+      return {
+        top: 15,
+        right: 0, // No right margin on mobile to use full width
+        left: 0,  // No left margin on mobile to use full width
+        bottom: 5,
+      };
+    }
+    return {
+      top: 20,
+      right: 10,
+      left: 0,
+      bottom: 5,
+    };
+  };
+
   return (
     <div className="dashboard">
-      {/* Header */}
-       <div className="header">
-        <div className="logo-container">
-          <img
-            src="/images/Neurolens Aligned Eye Blue PNG.png"
-            alt="Neurolens - Relief is in Sight"
-            className="company-logo"
-          />
+      {/* Header - Logo only shows on non-mobile */}
+      <div className="header" style={{ marginBottom: isMobile ? '8px' : '16px' }}>
+        {!isMobile && (
+          <div className="logo-container">
+            <img
+              src="/images/Neurolens Aligned Eye Blue PNG.png"
+              alt="Neurolens - Relief is in Sight"
+              className="company-logo"
+            />
           </div>
-          <div className="header-text">
-            {/* Use default value if practiceName is missing */}
-            <h1>{practiceName} - Performance Summary</h1>
-            <p>Date Range: {dateRange}</p>
-          </div>
+        )}
+        <div className="header-text" style={{ textAlign: isMobile ? 'center' : 'left', width: '100%' }}>
+          {/* Use default value if practiceName is missing */}
+          <h1>{practiceName} - Performance Summary</h1>
+          <p>Date Range: {dateRange}</p>
+        </div>
       </div>
       
       {/* UPDATED: True Overlapping Bar Chart - Symptomatic with Orders on top */}
-      <div className="card">
-        <h2>
+      <div className="card" style={{ 
+        padding: isMobile ? '8px 2px' : '16px', // Reduced horizontal padding significantly on mobile
+        marginBottom: isMobile ? '10px' : '16px'
+      }}>
+        <h2 style={{ 
+          marginBottom: isMobile ? '6px' : '12px',
+          paddingLeft: isMobile ? '8px' : '0' // Add padding to the title on mobile since the card padding is reduced
+        }}>
           High Sx vs <span style={{ color: '#BA4DA5' }}>Orders</span> by Provider
         </h2>
-        <ResponsiveContainer width="100%" height={280}>
+        <ResponsiveContainer width="100%" height={isMobile ? 240 : 280}>
           <BarChart
             data={filteredChartData}
             margin={{
-              top: 30,
-              right: 20,
-              left: 0,
-              bottom: 5,
+              top: 5,
+              right: 0,   // Reduce right margin further
+              left: -30,  // Try a larger negative left margin
+              bottom: 0,
             }}
             barSize={getBarSize()} // Dynamic bar size based on screen width
+            barCategoryGap="20%" // Adjust gap between categories if needed
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-            <XAxis dataKey="shortName" tick={{fill: '#aaa', fontSize: 11}} />
-            {/* Y-axis with no labels, just the grid lines */}
-            <YAxis tick={false} axisLine={false} />
+            <XAxis dataKey="shortName" tick={{fill: '#aaa', fontSize: 10}} interval={0} /> // interval={0} ensures all labels show
+            <YAxis
+              tick={{fill: '#aaa', fontSize: 10}}
+              width={25}       // Explicitly reduce calculated width (default might be ~60)
+              tickMargin={-5} // Pull tick labels closer to axis line (or even slightly overlap)
+            />
             {/* First bar for total symptomatic patients */}
             <Bar 
               dataKey="_highSx" 
@@ -236,8 +269,10 @@ function App() {
       </div>
 
       {/* Prescriber Table with Totals - SORTED by measurements descending, "No Provider" always last */}
-      <div className="card">
-        <h2>Prescriber Performance Summary</h2>
+      <div className="card" style={{ padding: isMobile ? '10px' : '16px', marginBottom: isMobile ? '10px' : '16px' }}>
+        <h2 style={{ marginBottom: isMobile ? '6px' : '12px' }}>
+          Prescriber Performance Summary
+        </h2>
         <div className="table-container">
           <table>
             <thead>
@@ -281,21 +316,28 @@ function App() {
             </tbody>
           </table>
         </div>
-        <div className="small-text">
+        <div className="small-text" style={{ fontSize: isMobile ? '0.7rem' : '0.75rem' }}>
           * Orders placed with SpecCheck typically appear per unique prescriber. Unknown prescriber values are counts for patient measurements not assigned a provider and/or orders not matched to a patient.
         </div>
       </div>
 
       {/* Daily Activity Waterfall Chart */}
-      <div className="card">
-        <h2>Daily Activity Trend</h2>
-        <ResponsiveContainer width="100%" height={300}>
+      <div className="card" style={{ 
+        padding: isMobile ? '10px 4px' : '16px' // Reduced horizontal padding for the bottom chart too
+      }}>
+        <h2 style={{ 
+          marginBottom: isMobile ? '6px' : '12px',
+          paddingLeft: isMobile ? '6px' : '0' // Add padding to the title since the card padding is reduced
+        }}>
+          Daily Activity Trend
+        </h2>
+        <ResponsiveContainer width="100%" height={isMobile ? 260 : 300}>
           <AreaChart
             data={dailyData}
             margin={{
               top: 20,
-              right: 30,
-              left: 20,
+              right: isMobile ? 0 : 30, // No right margin on mobile
+              left: isMobile ? 0 : 20,  // No left margin on mobile
               bottom: 20,
             }}
           >
@@ -330,34 +372,6 @@ function App() {
             <Area type="monotone" dataKey="highSx" name="Highly Symptomatic" stroke="#ffc658" fill="#ffc658" fillOpacity={0.6} />
             <Area type="monotone" dataKey="orders" name="Orders" stroke="#ff8042" fill="#ff8042" fillOpacity={0.6} />
           </AreaChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Highly Symptomatic Patients by Provider */}
-      <div className="card">
-        <h2>Highly Symptomatic Patients by Provider</h2>
-        {/* Apply mobile adjustments via CSS, keep desktop height */}
-        <ResponsiveContainer width="100%" height={250} className="recharts-responsive-container">
-          <BarChart
-            data={prescriberData}
-            margin={{
-              top: 5,     // Reduced top margin
-              right: 5,    // Reduced right margin
-              left: -20,   // Significantly reduced left margin (adjust as needed)
-              bottom: 0,
-            }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-            {/* Adjust tick font size directly if needed */}
-            <XAxis dataKey="shortName" tick={{fill: '#aaa', fontSize: 10}} />
-            <YAxis tick={{fill: '#aaa', fontSize: 10}} />
-            <Tooltip
-              contentStyle={{backgroundColor: '#222', borderColor: '#555'}}
-              labelStyle={{color: '#ddd'}}
-              itemStyle={{color: '#8bb3f4'}}
-            />
-            <Bar dataKey="highSx" name="Highly Symptomatic" fill="#60a5fa" radius={[4, 4, 0, 0]} />
-          </BarChart>
         </ResponsiveContainer>
       </div>
     </div>
