@@ -133,6 +133,17 @@ function App() {
       _orders: prescriber.orders || 0    // This will be the overlay
     }));
 
+  // Sort prescriber data by measurements (descending) for the table, 
+  // but with special handling to ensure "No Provider" is always last
+  const sortedPrescriberData = [...prescriberData].sort((a, b) => {
+    // If either is the "No Provider" entry, handle specially
+    if (a.name === "No Provider") return 1;  // a is "No Provider", move to end
+    if (b.name === "No Provider") return -1; // b is "No Provider", move to end
+    
+    // Normal sort by measurements descending
+    return (b.measurements || 0) - (a.measurements || 0);
+  });
+
   // Custom label component for the bar values
   const renderCustomBarLabel = (props) => {
     const { x, y, width, value, height } = props;
@@ -224,7 +235,7 @@ function App() {
         </ResponsiveContainer>
       </div>
 
-      {/* Prescriber Table with Totals */}
+      {/* Prescriber Table with Totals - SORTED by measurements descending, "No Provider" always last */}
       <div className="card">
         <h2>Prescriber Performance Summary</h2>
         <div className="table-container">
@@ -239,7 +250,8 @@ function App() {
               </tr>
             </thead>
             <tbody>
-              {prescriberData.map((prescriber, index) => (
+              {/* Display sorted prescriber data with "No Provider" always at the bottom */}
+              {sortedPrescriberData.map((prescriber, index) => (
                 <tr key={index}>
                   <td>{prescriber.name || 'Unknown'}</td>
                   <td className="center">{prescriber.measurements || 0}</td>
@@ -248,7 +260,7 @@ function App() {
                   <td className="center">{prescriber.orders || 0}</td>
                 </tr>
               ))}
-              {/* No prescriber/Unknown row - conditionally rendered */}
+              {/* "Unknown" row - conditionally rendered and always at the bottom */}
               {hasUnknownOrders && (
                 <tr>
                   <td>Unknown</td>
@@ -318,6 +330,34 @@ function App() {
             <Area type="monotone" dataKey="highSx" name="Highly Symptomatic" stroke="#ffc658" fill="#ffc658" fillOpacity={0.6} />
             <Area type="monotone" dataKey="orders" name="Orders" stroke="#ff8042" fill="#ff8042" fillOpacity={0.6} />
           </AreaChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Highly Symptomatic Patients by Provider */}
+      <div className="card">
+        <h2>Highly Symptomatic Patients by Provider</h2>
+        {/* Apply mobile adjustments via CSS, keep desktop height */}
+        <ResponsiveContainer width="100%" height={250} className="recharts-responsive-container">
+          <BarChart
+            data={prescriberData}
+            margin={{
+              top: 5,     // Reduced top margin
+              right: 5,    // Reduced right margin
+              left: -20,   // Significantly reduced left margin (adjust as needed)
+              bottom: 0,
+            }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+            {/* Adjust tick font size directly if needed */}
+            <XAxis dataKey="shortName" tick={{fill: '#aaa', fontSize: 10}} />
+            <YAxis tick={{fill: '#aaa', fontSize: 10}} />
+            <Tooltip
+              contentStyle={{backgroundColor: '#222', borderColor: '#555'}}
+              labelStyle={{color: '#ddd'}}
+              itemStyle={{color: '#8bb3f4'}}
+            />
+            <Bar dataKey="highSx" name="Highly Symptomatic" fill="#60a5fa" radius={[4, 4, 0, 0]} />
+          </BarChart>
         </ResponsiveContainer>
       </div>
     </div>
