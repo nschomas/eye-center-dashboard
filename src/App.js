@@ -1,54 +1,69 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
-         ResponsiveContainer, AreaChart, Area } from 'recharts';
+// Import useParams
+import { useParams } from 'react-router-dom';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+         ResponsiveContainer, AreaChart, Area, LabelList } from 'recharts';
 import './App.css';
 
 function App() {
+  // Get the practiceId from the URL path parameter
+  const { practiceId } = useParams();
+
   // Add state hooks for data loading
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  // Use effect to fetch data on component mount
+
+  // Use effect to fetch data on component mount or when practiceId changes
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        // Get practiceId from URL query parameter
-        const urlParams = new URLSearchParams(window.location.search);
-        const practiceId = urlParams.get('practiceId');
+      // Reset states when starting fetch
+      setLoading(true);
+      setError(null);
+      setDashboardData(null);
 
+      try {
+        // Validate practiceId presence (useParams provides it directly)
         if (!practiceId) {
-          setError('No practice ID provided. Please include a valid practice ID in the URL.');
+          // This case should technically not happen if routing is set up correctly,
+          // but it's good practice to check.
+          setError('No practice ID found in URL path.');
           setLoading(false);
           return;
         }
-        
+
         // Replace with your Power Automate flow URL
         const response = await fetch('https://prod-121.westus.logic.azure.com:443/workflows/ae97f93478ea45a49447ed9b984d7971/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=jkNp7-6ahOHoHjc04gB07WLMOenNL37zsdrq7qWt7sg', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
+          // Send the practiceId obtained from useParams
           body: JSON.stringify({ practiceId })
         });
-        
+
         if (!response.ok) {
-          throw new Error(`Error: ${response.status}`);
+          // Provide more specific error message
+          throw new Error(`Failed to fetch dashboard data: ${response.status} ${response.statusText}`);
         }
-        
+
         const data = await response.json();
         setDashboardData(data);
-        setLoading(false);
-      } catch (error) {
-        console.error("Failed to fetch dashboard data:", error);
-        setError(error.message);
+
+      } catch (err) {
+        console.error("Failed to fetch dashboard data:", err);
+        setError(err.message || 'An unexpected error occurred while fetching data.');
+      } finally {
         setLoading(false);
       }
     };
-    
+
     fetchData();
-  }, []);
-  
+  // Add practiceId to the dependency array.
+  // This ensures data re-fetches if the user navigates
+  // from one dashboard directly to another (e.g., using browser back/forward).
+  }, [practiceId]);
+
   // Add loading and error states
   if (loading) return (
     <div className="loading-container">
@@ -64,73 +79,138 @@ function App() {
           <line x1="12" y1="8" x2="12" y2="12"></line>
           <line x1="12" y1="16" x2="12.01" y2="16"></line>
         </svg>
-        Error
+        Error Loading Dashboard
       </h2>
       <p>{error}</p>
-      <p className="suggestion">Please check the URL and try again. If the problem persists, contact support.</p>
+      <p className="suggestion">Please check the URL or Practice ID and try again. If the problem persists, contact support.</p>
     </div>
   );
-  if (!dashboardData) return <div className="no-data">No data available</div>;
-  
-  // Extract data from API response
-  const { practiceName, dateRange, prescriberData, dailyData, patientsHelped } = dashboardData;
-  
+
+  // Check specifically if dashboardData is null AFTER loading is false and there's no error
+  if (!dashboardData) return (
+    <div className="no-data">
+        No data available for Practice ID: {practiceId}. Please verify the ID or check data source.
+    </div>
+  );
+
+
+  // Extract data from API response (add checks for potentially missing data)
+  const { practiceName = "Practice", dateRange = "N/A", prescriberData = [], dailyData = [], patientsHelped = 0 } = dashboardData;
+
   // Calculate derived values
-  const knownOrders = prescriberData.reduce((sum, item) => sum + item.orders, 0);
+  const knownOrders = prescriberData.reduce((sum, item) => sum + (item.orders || 0), 0); // Add fallback
   const unknownOrders = patientsHelped - knownOrders;
   const hasUnknownOrders = unknownOrders > 0;
-  
+
   // Calculate totals for the table
   const totals = {
-    measurements: prescriberData.reduce((sum, item) => sum + item.measurements, 0),
-    portalViews: prescriberData.reduce((sum, item) => sum + item.portalViews, 0),
-    highSx: prescriberData.reduce((sum, item) => sum + item.highSx, 0),
-    orders: patientsHelped
+    measurements: prescriberData.reduce((sum, item) => sum + (item.measurements || 0), 0), // Add fallback
+    portalViews: prescriberData.reduce((sum, item) => sum + (item.portalViews || 0), 0), // Add fallback
+    highSx: prescriberData.reduce((sum, item) => sum + (item.highSx || 0), 0), // Add fallback
+    orders: patientsHelped // Use the total from the main object if available
   };
 
-  // The rest of your code remains the same
+  // Create modified data for true overlapping bars - sort by highSx first
+  const modifiedChartData = [...prescriberData]
+    .sort((a, b) => (b.highSx || 0) - (a.highSx || 0))
+    .map(prescriber => ({
+      ...prescriber,
+      // Keep original values for the table
+      // Create combined data for the chart - orders will be displayed on top of highSx
+      _highSx: prescriber.highSx || 0,  // Underscore to avoid confusion with original property
+      _orders: prescriber.orders || 0    // This will be the overlay
+    }));
+
+  // Custom label component for the bar values
+  const renderCustomBarLabel = (props) => {
+    const { x, y, width, value, height } = props;
+    return (
+      <g>
+        <text 
+          x={x + width / 2} 
+          y={y - 6} 
+          fill="#FFF" 
+          textAnchor="middle" 
+          dominantBaseline="middle"
+          fontSize="11"
+          fontWeight="bold"
+        >
+          {value}
+        </text>
+      </g>
+    );
+  };
+
   return (
     <div className="dashboard">
-      <div className="header">
+      {/* Header */}
+       <div className="header">
         <div className="logo-container">
-          <img 
-            src="/images/Neurolens Aligned Eye Blue PNG.png" 
-            alt="Neurolens - Relief is in Sight" 
-            className="company-logo" 
+          <img
+            src="/images/Neurolens Aligned Eye Blue PNG.png"
+            alt="Neurolens - Relief is in Sight"
+            className="company-logo"
           />
           </div>
           <div className="header-text">
+            {/* Use default value if practiceName is missing */}
             <h1>{practiceName} - Performance Summary</h1>
             <p>Date Range: {dateRange}</p>
           </div>
       </div>
       
-      {/* Highly Symptomatic Patients by Provider */}
+      {/* UPDATED: True Overlapping Bar Chart - Symptomatic with Orders on top */}
       <div className="card">
-        <h2>Highly Symptomatic Patients by Provider</h2>
-        <ResponsiveContainer width="100%" height={250}>
+        <h2>Symptomatic Patients vs Orders by Provider</h2>
+        <ResponsiveContainer width="100%" height={280}>
           <BarChart
-            data={prescriberData}
+            data={modifiedChartData}
             margin={{
-              top: 20,
+              top: 30,
               right: 20,
               left: 0,
-              bottom: 0,
+              bottom: 5,
             }}
+            barSize={40} // Wider bars look better for this visualization
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#444" />
             <XAxis dataKey="shortName" tick={{fill: '#aaa', fontSize: 11}} />
             <YAxis tick={{fill: '#aaa'}} />
-            <Tooltip 
-              contentStyle={{backgroundColor: '#222', borderColor: '#555'}} 
-              labelStyle={{color: '#ddd'}}
-              itemStyle={{color: '#8bb3f4'}}
+            {/* Removed Tooltip */}
+            <Legend 
+              wrapperStyle={{color: '#aaa'}} 
+              verticalAlign="top"
+              align="right"
+              iconSize={10}
+              iconType="circle"
+              formatter={(value) => value === "High Sx (Total)" ? "High Sx" : value}
             />
-            <Bar dataKey="highSx" name="Highly Symptomatic" fill="#60a5fa" radius={[4, 4, 0, 0]} />
+            {/* First bar for total symptomatic patients */}
+            <Bar 
+              dataKey="_highSx" 
+              name="High Sx (Total)" 
+              fill="#60a5fa" 
+              radius={[4, 4, 0, 0]}
+              isAnimationActive={false}
+            >
+              <LabelList dataKey="_highSx" content={renderCustomBarLabel} />
+            </Bar>
+            {/* Second bar for orders - will be displayed on top due to stack order */}
+            <Bar 
+              dataKey="_orders" 
+              name="Orders" 
+              fill="#BA4DA5" 
+              radius={[4, 4, 0, 0]}
+              // Make the Orders bar semi-transparent to see the underlying bar
+              fillOpacity={0.8}
+              isAnimationActive={false} 
+            >
+              <LabelList dataKey="_orders" content={renderCustomBarLabel} />
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>
-      
+
       {/* Prescriber Table with Totals */}
       <div className="card">
         <h2>Prescriber Performance Summary</h2>
@@ -148,11 +228,11 @@ function App() {
             <tbody>
               {prescriberData.map((prescriber, index) => (
                 <tr key={index}>
-                  <td>{prescriber.name}</td>
-                  <td className="center">{prescriber.measurements}</td>
-                  <td className="center">{prescriber.portalViews}</td>
-                  <td className="center">{prescriber.highSx}</td>
-                  <td className="center">{prescriber.orders}</td>
+                  <td>{prescriber.name || 'Unknown'}</td>
+                  <td className="center">{prescriber.measurements || 0}</td>
+                  <td className="center">{prescriber.portalViews || 0}</td>
+                  <td className="center">{prescriber.highSx || 0}</td>
+                  <td className="center">{prescriber.orders || 0}</td>
                 </tr>
               ))}
               {/* No prescriber/Unknown row - conditionally rendered */}
@@ -180,7 +260,7 @@ function App() {
           * Orders placed with SpecCheck typically appear per unique prescriber. Unknown prescriber values are counts for patient measurements not assigned a provider and/or orders not matched to a patient.
         </div>
       </div>
-      
+
       {/* Daily Activity Waterfall Chart */}
       <div className="card">
         <h2>Daily Activity Trend</h2>
@@ -197,27 +277,27 @@ function App() {
             <CartesianGrid strokeDasharray="3 3" stroke="#444" />
             <XAxis dataKey="name" tick={{fill: '#aaa'}} />
             <YAxis tick={{fill: '#aaa'}} />
-            <Tooltip 
+            <Tooltip
               contentStyle={{
-                backgroundColor: '#222', 
+                backgroundColor: '#222',
                 borderColor: '#555',
-                fontSize: '12px',        // Reduce font size
-                padding: '5px 8px',      // Reduce padding
-                borderRadius: '4px',     // Optional: slightly rounded corners
-                boxShadow: '0 2px 4px rgba(0,0,0,0.3)'  // Optional: subtle shadow
-              }} 
+                fontSize: '12px',
+                padding: '5px 8px',
+                borderRadius: '4px',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+              }}
               labelStyle={{
-                display: 'none'          // Hide the date/label completely
+                display: 'none'
               }}
               itemStyle={{
                 color: '#ddd',
-                fontSize: '12px',        // Ensure item text is also smaller
-                padding: '2px 0'         // Reduce spacing between items
+                fontSize: '12px',
+                padding: '2px 0'
               }}
               wrapperStyle={{
-                zIndex: 100             // Ensure tooltip stays on top
+                zIndex: 100
               }}
-              formatter={(value) => value} // Just show the value
+              formatter={(value) => value || 0} // Fallback to 0
             />
             <Legend wrapperStyle={{color: '#aaa'}} />
             <Area type="monotone" dataKey="measurements" name="Measurements" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />

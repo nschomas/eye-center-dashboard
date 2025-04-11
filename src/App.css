@@ -12,20 +12,43 @@ body {
 }
 
 .header {
-  text-align: center;
+  position: relative;
+  padding: 16px;
   margin-bottom: 16px;
+  min-height: 40px;
 }
 
-.header h1 {
+.logo-container {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.company-logo {
+  height: 40px;
+  width: auto;
+  display: block;
+}
+
+.header-text {
+  text-align: center;
+  padding-left: 70px;
+  padding-right: 70px;
+}
+
+.header-text h1 {
   color: #60a5fa;
   font-size: 1.5rem;
   margin-bottom: 4px;
+  margin-top: 0;
 }
 
-.header p {
+.header-text p {
   color: #9ca3af;
   font-size: 0.875rem;
   margin-top: 0;
+  margin-bottom: 0;
 }
 
 .card {
@@ -87,45 +110,6 @@ td {
 .small-text {
   font-size: 0.75rem;
   color: #6b7280;
-}
-
-/* Update the header styles in App.css */
-.header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.logo-container {
-  margin-right: 20px;
-}
-
-.company-logo {
-  height: 40px;
-  width: auto;
-}
-
-.header-text {
-  flex: 1;
-  text-align: center;
-}
-
-/* For mobile devices */
-@media (max-width: 767px) {
-  .header {
-    flex-direction: column;
-    align-items: center; /* Center children horizontally */
-  }
-  
-  .logo-container {
-    margin-right: 0;
-    margin-bottom: 10px;
-    /* Remove align-self: flex-start to allow centering */
-  }
-  
-  .header-text {
-    width: 100%;
-  }
 }
 
 /* Error and Loading States */
@@ -192,5 +176,223 @@ td {
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* === Mobile Styles === */
+@media (max-width: 767px) {
+  .header {
+    position: static;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+  }
+
+  .logo-container {
+    position: static;
+    transform: none;
+    margin-bottom: 10px;
+  }
+
+  .header-text {
+    width: 100%;
+    text-align: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+/* === Customer List Page === */
+.customer-list-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px 24px;
+}
+
+/* Shared styles for search and table containers */
+.search-container,
+.table-container {
+  background-color: #1f2937;
+  border-radius: 12px;
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.4), inset -2px -2px 5px rgba(255, 255, 255, 0.05);
+  padding: 16px;
+  margin-bottom: 16px; /* Keep margin between them */
+}
+
+/* Keep table-container specific overflow */
+.table-container {
+  overflow-x: auto;
+}
+
+/* Remove margin from search-container as it's now part of shared style */
+.search-container {
+ /* margin-bottom: 16px; <- Handled by shared style */
+}
+
+/* Update search input to fit within its padded container */
+.search-input {
+  width: 100%; /* Takes full width of padded container */
+  padding: 10px 12px; /* Adjust padding as needed */
+  border-radius: 6px; /* Slightly smaller radius */
+  border: 1px solid #4b5563; /* Darker border to blend */
+  background-color: #374151; /* Slightly different background */
+  color: #e2e8f0;
+  font-size: 0.95rem; /* Slightly smaller font */
+  box-sizing: border-box; /* Ensure padding is included in width */
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #60a5fa;
+  background-color: #1f2937; /* Match container background on focus */
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.3);
+}
+
+.customers-table {
+  width: 100%;
+  border-collapse: collapse;
+  /* Remove margin-bottom from table itself */
+}
+
+.customers-table th,
+.customers-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #374151;
+}
+
+.customers-table th {
+  color: #93c5fd;
+  font-weight: 600;
+}
+
+.customers-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Sortable columns */
+.sortable {
+  cursor: pointer;
+  position: relative;
+}
+
+.sortable:hover {
+  background-color: rgba(96, 165, 250, 0.1);
+}
+
+.sort-indicator {
+  color: #60a5fa;
+  margin-left: 4px;
+}
+
+/* Customer links */
+.customer-link {
+  color: #60a5fa;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.customer-link:hover {
+  color: #93c5fd;
+  text-decoration: underline;
+}
+
+/* Action buttons */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.action-button {
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sms-button {
+  background-color: #4f46e5;
+  color: white;
+}
+
+.sms-button:hover {
+  background-color: #4338ca;
+}
+
+.email-button {
+  background-color: #2563eb;
+  color: white;
+}
+
+.email-button:hover {
+  background-color: #1d4ed8;
+}
+
+/* Login page */
+.login-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #111827;
+}
+
+.login-container {
+  background-color: #1f2937;
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.4), inset -2px -2px 5px rgba(255, 255, 255, 0.05);
+}
+
+.login-container .logo-container {
+  margin: 0 auto 20px;
+}
+
+.login-container h1 {
+  color: #60a5fa;
+  margin-bottom: 16px;
+}
+
+.login-button {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #2563eb;
+  color: white;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.login-button:hover {
+  background-color: #1d4ed8;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .logo-container {
+    margin-bottom: 12px;
+  }
+  
+  .customers-table th,
+  .customers-table td {
+    padding: 10px 12px;
+  }
+  
+  .action-button {
+    padding: 4px 8px;
+    font-size: 0.85rem;
   }
 }
