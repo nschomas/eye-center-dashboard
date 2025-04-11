@@ -13,6 +13,17 @@ function App() {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  // Track window width for responsive design
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Use effect to fetch data on component mount or when practiceId changes
   useEffect(() => {
@@ -110,8 +121,9 @@ function App() {
     orders: patientsHelped // Use the total from the main object if available
   };
 
-  // Create modified data for true overlapping bars - sort by highSx first
-  const modifiedChartData = [...prescriberData]
+  // Filter out providers with 0 High Sx values, then sort by highSx
+  const filteredChartData = [...prescriberData]
+    .filter(prescriber => (prescriber.highSx || 0) > 0) // Only include providers with at least 1 High Sx
     .sort((a, b) => (b.highSx || 0) - (a.highSx || 0))
     .map(prescriber => ({
       ...prescriber,
@@ -141,6 +153,13 @@ function App() {
     );
   };
 
+  // Calculate bar size based on screen width for mobile responsiveness
+  const getBarSize = () => {
+    if (windowWidth <= 480) return 34; // Narrower on mobile
+    if (windowWidth <= 768) return 36; // Slightly wider on tablets
+    return 40; // Default for desktop
+  };
+
   return (
     <div className="dashboard">
       {/* Header */}
@@ -161,34 +180,28 @@ function App() {
       
       {/* UPDATED: True Overlapping Bar Chart - Symptomatic with Orders on top */}
       <div className="card">
-        <h2>Symptomatic Patients vs Orders by Provider</h2>
+        <h2>
+          High Sx vs <span style={{ color: '#BA4DA5' }}>Orders</span> by Provider
+        </h2>
         <ResponsiveContainer width="100%" height={280}>
           <BarChart
-            data={modifiedChartData}
+            data={filteredChartData}
             margin={{
               top: 30,
               right: 20,
               left: 0,
               bottom: 5,
             }}
-            barSize={40} // Wider bars look better for this visualization
+            barSize={getBarSize()} // Dynamic bar size based on screen width
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#444" />
             <XAxis dataKey="shortName" tick={{fill: '#aaa', fontSize: 11}} />
-            <YAxis tick={{fill: '#aaa'}} />
-            {/* Removed Tooltip */}
-            <Legend 
-              wrapperStyle={{color: '#aaa'}} 
-              verticalAlign="top"
-              align="right"
-              iconSize={10}
-              iconType="circle"
-              formatter={(value) => value === "High Sx (Total)" ? "High Sx" : value}
-            />
+            {/* Y-axis with no labels, just the grid lines */}
+            <YAxis tick={false} axisLine={false} />
             {/* First bar for total symptomatic patients */}
             <Bar 
               dataKey="_highSx" 
-              name="High Sx (Total)" 
+              name="High Sx" 
               fill="#60a5fa" 
               radius={[4, 4, 0, 0]}
               isAnimationActive={false}
