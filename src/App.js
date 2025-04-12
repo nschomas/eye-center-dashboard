@@ -241,6 +241,7 @@ function App() {
               tick={{fill: '#aaa', fontSize: 10}}
               width={25}       // Explicitly reduce calculated width (default might be ~60)
               tickMargin={-5} // Pull tick labels closer to axis line (or even slightly overlap)
+              domain={[0, dataMax => (dataMax > 0 ? dataMax + .5 : 10)]} // Ensure domain is at least e.g., 10 if max is 0
             />
             {/* First bar for total symptomatic patients */}
             <Bar 

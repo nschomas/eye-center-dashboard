@@ -417,3 +417,13 @@ td {
     font-size: 0.85rem;
   }
 }
+
+/* Ensure td.center overrides default td alignment */
+.customers-table td.center {
+  text-align: center;
+}
+
+/* Ensure th.center overrides default th alignment */
+.customers-table th.center {
+  text-align: center;
+}
