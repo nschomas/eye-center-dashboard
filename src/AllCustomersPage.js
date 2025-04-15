@@ -13,6 +13,8 @@ function AllCustomersPage() {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'ascending' });
+  // State to track which customer's SMS is being sent
+  const [sendingSmsCustomerId, setSendingSmsCustomerId] = useState(null);
 
   // Effect to fetch data on component mount
   useEffect(() => {
@@ -118,13 +120,66 @@ function AllCustomersPage() {
     setSortConfig({ key, direction });
   };
 
-  const handleSendReport = (customerId, method) => {
-    // Find customer to get details if needed (e.g., phone/email for alert)
+  const handleSendReport = async (customerId, method) => {
+    // Find the customer data
     const customer = allCustomers.find(c => c.id === customerId);
-    // Use tamPhone from API response
-    const contactInfo = method === 'SMS' ? customer?.tamPhone : customer?.tamEmail;
-    alert(`Report for ${customer?.name || customerId} will be sent via ${method}${contactInfo ? ` to ${contactInfo}` : ''}. This feature will be connected to Power Automate later.`);
-    // Note: We might want to disable buttons if contact info isn't present in fetched data
+    if (!customer) {
+      alert("Could not find customer data.");
+      return;
+    }
+
+    if (method === 'SMS') {
+      // Prevent sending if TAM phone is missing or if already sending for this user
+      if (!customer.tamPhone) {
+        alert("TAM phone number is not available for this customer.");
+        return;
+      }
+      if (sendingSmsCustomerId) {
+        // Already sending an SMS, prevent concurrent requests for simplicity
+        alert("Please wait for the current SMS request to complete.");
+        return; 
+      }
+
+      setSendingSmsCustomerId(customerId); // Indicate sending started
+
+      const recipientPhoneNumber = customer.tamPhone;
+      // Ensure the dashboard link is the full URL
+      const reportLink = `${window.location.origin}/dashboard/${customerId}`;
+      // Use environment variable for backend URL
+      const backendBaseUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001'; // Fallback for safety
+      const backendUrl = `${backendBaseUrl}/send-sms`;
+
+      try {
+        const response = await fetch(backendUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ recipientPhoneNumber, reportLink }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          alert(`SMS successfully sent to ${customer.tam || 'the TAM'}!`);
+        } else {
+          // Use error message from backend if available, otherwise a generic one
+          console.error("Backend Error sending SMS:", data);
+          alert(`Failed to send SMS: ${data.error || response.statusText || 'Unknown error'}`);
+        }
+      } catch (networkError) {
+        console.error("Network Error sending SMS:", networkError);
+        // Update error message to reflect potential misconfiguration
+        alert(`Failed to send SMS: Could not reach the server. Ensure it's running and REACT_APP_BACKEND_URL is configured correctly (${backendUrl}).`);
+      } finally {
+        setSendingSmsCustomerId(null); // Indicate sending finished (success or fail)
+      }
+
+    } else if (method === 'Email') {
+      // Keep existing placeholder logic for Email
+      const contactInfo = customer?.tamEmail;
+      alert(`Report for ${customer?.name || customerId} will be sent via Email${contactInfo ? ` to ${contactInfo}` : ''}. This feature will be connected to Power Automate later.`);
+    }
   };
 
   // --- Conditional Rendering ---
@@ -133,7 +188,7 @@ function AllCustomersPage() {
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
-        <p>Loading customer data...</p>
+        <p>Loading customer data...This may take up to 30 seconds.</p>
       </div>
     );
   }
@@ -241,9 +296,9 @@ function AllCustomersPage() {
                         onClick={() => handleSendReport(customer.id, 'SMS')}
                         // Use tamPhone from API response
                         title={`Send SMS to ${customer.tamPhone || 'N/A'}`}
-                        disabled={!customer.tamPhone} 
+                        disabled={!customer.tamPhone || sendingSmsCustomerId === customer.id} 
                       >
-                        SMS
+                        {sendingSmsCustomerId === customer.id ? 'Sending...' : 'SMS'}
                       </button>
                       <button 
                         className="action-button email-button"
