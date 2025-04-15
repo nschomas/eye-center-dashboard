@@ -149,7 +149,7 @@ function App() {
 
   // Custom label component for the bar values
   const renderCustomBarLabel = (props) => {
-    const { x, y, width, value, height } = props;
+    const { x, y, width, value } = props;
     return (
       <g>
         <text 
@@ -172,24 +172,6 @@ function App() {
     if (windowWidth <= 480) return 34; // Narrower on mobile
     if (windowWidth <= 768) return 36; // Slightly wider on tablets
     return 40; // Default for desktop
-  };
-
-  // Get adjusted margins for charts based on screen size
-  const getTopChartMargins = () => {
-    if (isMobile) {
-      return {
-        top: 15,
-        right: 0, // No right margin on mobile to use full width
-        left: 0,  // No left margin on mobile to use full width
-        bottom: 5,
-      };
-    }
-    return {
-      top: 20,
-      right: 10,
-      left: 0,
-      bottom: 5,
-    };
   };
 
   return (
@@ -236,7 +218,7 @@ function App() {
             barCategoryGap="20%" // Adjust gap between categories if needed
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-            <XAxis dataKey="shortName" tick={{fill: '#aaa', fontSize: 10}} interval={0} /> // interval={0} ensures all labels show
+            <XAxis dataKey="shortName" tick={{fill: '#aaa', fontSize: 10}} interval={0} /> {/* interval={0} ensures all labels show */}
             <YAxis
               tick={{fill: '#aaa', fontSize: 10}}
               width={25}       // Explicitly reduce calculated width (default might be ~60)

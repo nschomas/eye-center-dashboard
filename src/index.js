@@ -4,8 +4,8 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import AppRouter from './Router';
 import reportWebVitals from './reportWebVitals';
-import LoginPage from './LoginPage';
-import AllCustomersPage from './AllCustomersPage';
+// import LoginPage from './LoginPage'; // Removed unused import
+// import AllCustomersPage from './AllCustomersPage'; // Removed unused import
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
