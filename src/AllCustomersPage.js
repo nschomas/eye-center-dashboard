@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { UserButton } from "@clerk/clerk-react";
 import './App.css';
 
 // API Endpoint
@@ -213,18 +214,24 @@ function AllCustomersPage() {
   // --- Main Render ---
   return (
     <div className="all-customers-page">
-      <div className="header">
-        <div className="logo-container">
-          <a href="https://portal.neurolens.com" target="_blank" rel="noopener noreferrer">
-            <img 
-              src="/images/Neurolens Aligned Eye Blue PNG.png" 
-              alt="Neurolens - Relief is in Sight" 
-              className="company-logo" 
-            />
-          </a>
+      <div className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div className="logo-container" style={{ marginRight: '1rem' }}>
+            <a href="https://portal.neurolens.com" target="_blank" rel="noopener noreferrer">
+              <img 
+                src="/images/Neurolens Aligned Eye Blue PNG.png" 
+                alt="Neurolens - Relief is in Sight" 
+                className="company-logo" 
+              />
+            </a>
+          </div>
+          <div className="header-text">
+            <h1>Neurolens Weekly Performance Summaries</h1>
+          </div>
         </div>
-        <div className="header-text">
-          <h1>Neurolens Weekly Performance Summaries</h1>
+        
+        <div className="user-button-container">
+          <UserButton afterSignOutUrl='/login' />
         </div>
       </div>
       
