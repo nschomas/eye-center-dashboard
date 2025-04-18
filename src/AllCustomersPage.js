@@ -230,20 +230,21 @@ function AllCustomersPage() {
         gridTemplateColumns: 'auto 1fr auto', // Left: auto, Center: flexible, Right: auto
         alignItems: 'center', // Vertically align items in grid rows
         gap: isMobile ? '5px' : '10px', // Add small gap between columns
-        padding: isMobile ? '8px 8px' : '8px 16px',
-        marginBottom: '16px'
+        padding: isMobile ? '8px 32px' : '8px 32px',
+        marginBottom: '16px',
+        maxWidth: '1200px',
+        marginLeft: 'auto',
+        marginRight: 'auto'
       }}>
 
         {/* Left Section (Logo) - Grid Column 1 */}
         <div className="header-left" style={{ /* No flex needed */ }}>
-          <a href="https://portal.neurolens.com" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
-            <img 
-              src="/images/Neurolens Aligned Eye Blue PNG.png" 
-              alt="Neurolens - Relief is in Sight" 
-              className="company-logo" 
-              style={{ height: '35px', width: 'auto', display: 'block' }}
-            />
-          </a>
+          <img 
+            src="/images/Neurolens Aligned Eye Blue PNG.png" 
+            alt="Neurolens - Relief is in Sight" 
+            className="company-logo" 
+            style={{ height: '35px', width: 'auto', display: 'block', verticalAlign: 'middle' }}
+          />
         </div>
 
         {/* Center Section (Title) - Grid Column 2 */}
@@ -307,7 +308,10 @@ function AllCustomersPage() {
                       </span>
                     )}
                   </th>
-                  <th>Send Report (Coming Soon!)</th>
+                  {/* Comment out Send Report header */}
+                  {/* 
+                  <th>Send Report (Coming Soon!)</th> 
+                  */}
                 </tr>
               </thead>
               <tbody>
@@ -321,8 +325,7 @@ function AllCustomersPage() {
                         {customer.name || 'N/A'}
                       </Link>
                     </td>
-                    <td>{customer.tam || 'N/A'}
-                    </td>
+                    <td>{customer.tam || 'N/A'}</td>
                     <td className="center">
                       {customer.isTop12Focus && (
                         <span style={{ color: '#60a5fa', fontSize: '1.2em' }} title="Top 12 Focus Account">
@@ -330,6 +333,8 @@ function AllCustomersPage() {
                         </span>
                       )}
                     </td>
+                    {/* Comment out action buttons cell */}
+                    {/* 
                     <td className="action-buttons">
                       <button 
                         className="action-button sms-button"
@@ -348,6 +353,7 @@ function AllCustomersPage() {
                         Email
                       </button>
                     </td>
+                     */}
                   </tr>
                 ))}
               </tbody>
