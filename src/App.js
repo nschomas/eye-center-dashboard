@@ -17,9 +17,10 @@ import {
   Tooltip as ChartJsTooltip, // Renamed to avoid conflict
   Legend as ChartJsLegend // Renamed to avoid conflict
 } from 'chart.js';
-import { Bar as ChartJsBar } from 'react-chartjs-2'; // Renamed Bar component
+// Remove unused ChartJsBar import
+// import { Bar as ChartJsBar } from 'react-chartjs-2'; // Renamed Bar component
 // Import Recharts components needed for the *other* charts (AreaChart etc.)
-import { ResponsiveContainer, /* AreaChart, Area, */ XAxis as RechartsXAxis, YAxis as RechartsYAxis, CartesianGrid as RechartsCartesianGrid, Tooltip as RechartsTooltip, Legend as RechartsLegend } from 'recharts'; // Keep necessary Recharts imports
+// import { ResponsiveContainer, /* AreaChart, Area, */ XAxis as RechartsXAxis, YAxis as RechartsYAxis, CartesianGrid as RechartsCartesianGrid, Tooltip as RechartsTooltip, Legend as RechartsLegend } from 'recharts'; // Keep necessary Recharts imports
 
 // Import Plotly component
 import Plot from 'react-plotly.js';
@@ -246,7 +247,8 @@ function App() {
       gridcolor: '#444',
       showgrid: true,
       zeroline: false,
-      range: [0, Math.max(...filteredChartData.map(d => d._highSx)) + 2]
+      // Increase top padding for labels: use 15% of max value (or at least 2)
+      range: [0, Math.max(2, ...filteredChartData.map(d => d._highSx)) * 1.15] 
     },
     uniformtext: { minsize: 8, mode: 'hide' }
   };
@@ -273,31 +275,6 @@ function App() {
     if (b.name === "No Provider") return -1;
     return (b.measurements || 0) - (a.measurements || 0);
   });
-
-  // --- Recharts Label Component (Might still be used by AreaChart?) --- Keep if needed
-   const renderCustomBarLabel = (props) => {
-     const { x, y, width, value } = props;
-     // Hide label if value is 0 or null/undefined
-     if (!value || value === 0) {
-       return null;
-     }
-     return (
-       <g>
-         <text
-           x={x + width / 2}
-           y={y - 6} // Position above bar
-           fill="#FFF"
-           textAnchor="middle"
-           dominantBaseline="middle"
-           fontSize="11"
-           fontWeight="bold"
-         >
-           {value}
-         </text>
-       </g>
-     );
-   };
-   // -------------------------------------------------------------------
 
   // --- Process Daily Data: Filter, Reformat, and Split ---
   const processedDailyData = dailyData
