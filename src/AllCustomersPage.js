@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { UserButton } from "@clerk/clerk-react";
 import './App.css';
 
@@ -16,6 +16,8 @@ function AllCustomersPage() {
   const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'ascending' });
   // State to track which customer's SMS is being sent
   const [sendingSmsCustomerId, setSendingSmsCustomerId] = useState(null);
+  // Detect mobile based on window width (assuming this logic exists or add it)
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   // Effect to fetch data on component mount
   useEffect(() => {
@@ -110,6 +112,14 @@ function AllCustomersPage() {
     setDisplayedCustomers(processedCustomers);
 
   }, [allCustomers, searchTerm, sortConfig]); // Re-run when these change
+
+  // Detect mobile based on window width (assuming this logic exists or add it)
+  useEffect(() => {
+    const handleResize = () => { setWindowWidth(window.innerWidth); };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  const isMobile = windowWidth <= 768;
 
   // --- Render Functions ---
 
@@ -214,23 +224,45 @@ function AllCustomersPage() {
   // --- Main Render ---
   return (
     <div className="all-customers-page">
-      <div className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <div className="logo-container" style={{ marginRight: '1rem' }}>
-            <a href="https://portal.neurolens.com" target="_blank" rel="noopener noreferrer">
-              <img 
-                src="/images/Neurolens Aligned Eye Blue PNG.png" 
-                alt="Neurolens - Relief is in Sight" 
-                className="company-logo" 
-              />
-            </a>
-          </div>
-          <div className="header-text">
-            <h1>Neurolens Weekly Performance Summaries</h1>
-          </div>
+      {/* Header - Using CSS Grid */}
+      <div className="header" style={{
+        display: 'grid',
+        gridTemplateColumns: 'auto 1fr auto', // Left: auto, Center: flexible, Right: auto
+        alignItems: 'center', // Vertically align items in grid rows
+        gap: isMobile ? '5px' : '10px', // Add small gap between columns
+        padding: isMobile ? '8px 8px' : '8px 16px',
+        marginBottom: '16px'
+      }}>
+
+        {/* Left Section (Logo) - Grid Column 1 */}
+        <div className="header-left" style={{ /* No flex needed */ }}>
+          <a href="https://portal.neurolens.com" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+            <img 
+              src="/images/Neurolens Aligned Eye Blue PNG.png" 
+              alt="Neurolens - Relief is in Sight" 
+              className="company-logo" 
+              style={{ height: '35px', width: 'auto', display: 'block' }}
+            />
+          </a>
         </div>
-        
-        <div className="user-button-container">
+
+        {/* Center Section (Title) - Grid Column 2 */}
+        <div className="header-center" style={{
+          textAlign: 'center',
+          minWidth: 0 // Helps ensure text wraps correctly if needed
+        }}>
+          <h1 style={{
+              fontSize: isMobile ? '1.0rem' : '1.3rem', 
+              margin: 0,
+              color: '#5b9bd5', // Blue color
+              lineHeight: '1.2' 
+            }}>
+              Neurolens Weekly Performance Summaries
+          </h1>
+        </div>
+
+        {/* Right Section (User Button) - Grid Column 3 */}
+        <div className="header-right" style={{ /* No flex needed */ justifySelf: 'end' }}> {/* Align item to end of its grid cell */}
           <UserButton afterSignOutUrl='/login' />
         </div>
       </div>
@@ -275,7 +307,7 @@ function AllCustomersPage() {
                       </span>
                     )}
                   </th>
-                  <th>Send Report to TAM</th>
+                  <th>Send Report (Coming Soon!)</th>
                 </tr>
               </thead>
               <tbody>
@@ -286,10 +318,11 @@ function AllCustomersPage() {
                         to={`/dashboard/${customer.id}`}
                         className="customer-link"
                       >
-                        {customer.name || 'N/A'} {/* Add fallback for missing name */}
+                        {customer.name || 'N/A'}
                       </Link>
                     </td>
-                    <td>{customer.tam || 'N/A'} {/* Add fallback for missing TAM */}</td>
+                    <td>{customer.tam || 'N/A'}
+                    </td>
                     <td className="center">
                       {customer.isTop12Focus && (
                         <span style={{ color: '#60a5fa', fontSize: '1.2em' }} title="Top 12 Focus Account">
@@ -301,7 +334,6 @@ function AllCustomersPage() {
                       <button 
                         className="action-button sms-button"
                         onClick={() => handleSendReport(customer.id, 'SMS')}
-                        // Use tamPhone from API response
                         title={`Send SMS to ${customer.tamPhone || 'N/A'}`}
                         disabled={!customer.tamPhone || sendingSmsCustomerId === customer.id} 
                       >
@@ -310,7 +342,6 @@ function AllCustomersPage() {
                       <button 
                         className="action-button email-button"
                         onClick={() => handleSendReport(customer.id, 'Email')}
-                        // Check if tamEmail exists in the fetched data before enabling
                         title={`Send Email to ${customer.tamEmail || 'N/A'}`}
                         disabled={!customer.tamEmail} 
                       >

@@ -23,16 +23,29 @@ function ClerkProviderWithRoutes() {
       navigate={(to) => navigate(to)}
     >
       <Routes>
-        {/* Publicly accessible dashboard route */}
-        <Route path="/dashboard/:practiceId" element={<App />} />
+        {/* Protected dashboard route */}
+        <Route
+          path="/dashboard/:practiceId"
+          element={
+            <>
+              <SignedIn>
+                <App />
+              </SignedIn>
+              <SignedOut>
+                {/* Redirect to login if trying to access dashboard while signed out */}
+                <RedirectToSignIn redirectUrl={'/login'} />
+              </SignedOut>
+            </>
+          }
+        />
 
         {/* Login Page Route - Added wildcard */}
         <Route path="/login/*" element={<LoginPage />} />
 
         {/* Protected All Customers Route */}
         <Route
-          path="/all-customers" // Corrected path
-          element={ // Use element prop for complex rendering
+          path="/all-customers"
+          element={
             <>
               <SignedIn>
                 <AllCustomersPage />

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-// Import useParams
-import { useParams } from 'react-router-dom';
-// Import useUser from Clerk
-import { useUser } from '@clerk/clerk-react';
+// Import useParams, Link
+import { useParams, Link } from 'react-router-dom';
+// Import useUser and UserButton from Clerk
+import { useUser, UserButton } from '@clerk/clerk-react';
 // Remove Recharts BarChart imports if no longer needed by other charts
 // import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 //          ResponsiveContainer, AreaChart, Area, LabelList } from 'recharts';
@@ -19,7 +19,7 @@ import {
 } from 'chart.js';
 import { Bar as ChartJsBar } from 'react-chartjs-2'; // Renamed Bar component
 // Import Recharts components needed for the *other* charts (AreaChart etc.)
-import { ResponsiveContainer, AreaChart, Area, XAxis as RechartsXAxis, YAxis as RechartsYAxis, CartesianGrid as RechartsCartesianGrid, Tooltip as RechartsTooltip, Legend as RechartsLegend } from 'recharts'; // Keep necessary Recharts imports
+import { ResponsiveContainer, /* AreaChart, Area, */ XAxis as RechartsXAxis, YAxis as RechartsYAxis, CartesianGrid as RechartsCartesianGrid, Tooltip as RechartsTooltip, Legend as RechartsLegend } from 'recharts'; // Keep necessary Recharts imports
 
 // Import Plotly component
 import Plot from 'react-plotly.js';
@@ -181,7 +181,7 @@ function App() {
     y: filteredChartData.map(d => d._highSx),
     name: 'High Sx',
     type: 'bar',
-    width: 0.9, // Set width for the background bar
+    width: 0.5, // Set width for the background bar
     marker: {
       color: '#60a5fa' // Blue
     },
@@ -198,7 +198,7 @@ function App() {
     y: filteredChartData.map(d => d._orders),
     name: 'Orders',
     type: 'bar',
-    width: 0.6, // Set a smaller width for the foreground bar
+    width: 0.35, // Set a smaller width for the foreground bar
     marker: {
       color: '#BA4DA5', // Purple
       opacity: 0.85 // Slightly increased opacity for better visibility
@@ -213,19 +213,32 @@ function App() {
 
   const plotlyData = [plotlyTraceHighSx, plotlyTraceOrders]; // Order matters for overlay: HighSx first (bottom), Orders second (top)
 
-  // Prepare Plotly Layout
+  // --- Calculate X-axis range dynamically ---
+  const numCategories = filteredChartData.length;
+  let xaxisRange = undefined; // Default to auto-range
+  if (numCategories === 1) {
+    // If only one category, manually set range to constrain width
+    xaxisRange = [-0.7, 0.7];
+  } else if (numCategories > 1) {
+    // Optional: For multiple categories, default range often works well
+    // xaxisRange = [-0.5, numCategories - 0.5];
+  }
+  // ---------------------------------------
+
+  // Prepare Plotly Layout (Adjust top margin)
   const plotlyLayout = {
     barmode: 'overlay',
     showlegend: false,
     hovermode: false,
     autosize: true,
-    margin: { l: 20, r: 20, t: 30, b: isMobile ? 40 : 30 },
+    margin: { l: 20, r: 20, t: 15, b: isMobile ? 40 : 30 }, // Reduced top margin
     paper_bgcolor: 'rgba(0,0,0,0)',
     plot_bgcolor: 'rgba(0,0,0,0)',
     xaxis: {
       tickfont: { color: '#aaa', size: 10 },
       showgrid: false,
-      zeroline: false
+      zeroline: false,
+      range: xaxisRange // Apply dynamic range
     },
     yaxis: {
       showticklabels: false,
@@ -233,17 +246,12 @@ function App() {
       gridcolor: '#444',
       showgrid: true,
       zeroline: false,
-      range: [0, Math.max(...filteredChartData.map(d => d._highSx)) + 5]
+      range: [0, Math.max(...filteredChartData.map(d => d._highSx)) + 2]
     },
-    uniformtext: {
-      minsize: 8,
-      mode: 'hide'
-    }
+    uniformtext: { minsize: 8, mode: 'hide' }
   };
 
-  const plotlyConfig = {
-      displayModeBar: false
-  };
+  const plotlyConfig = { displayModeBar: false };
 
   // Calculate derived values for the TABLE (same as before)
   const knownOrders = prescriberData.reduce((sum, item) => sum + (item.orders || 0), 0);
@@ -291,19 +299,92 @@ function App() {
    };
    // -------------------------------------------------------------------
 
+  // --- Process Daily Data: Filter, Reformat, and Split ---
+  const processedDailyData = dailyData
+    .filter(day => day.name && !day.name.toLowerCase().startsWith('sun '))
+    .map(day => {
+      let dayAbbr = 'N/A';
+      let datePart = '';
+      let formattedName = day.name || 'N/A'; // Keep original formatted for fallback/key
+
+      const parts = day.name ? day.name.split(' ') : [];
+      if (parts.length === 2 && parts[1].includes('/')) {
+        dayAbbr = parts[0]; // e.g., "Mon"
+        const dateParts = parts[1].split('/');
+        if (dateParts.length === 2) {
+          const month = parseInt(dateParts[0], 10);
+          const dayOfMonth = parseInt(dateParts[1], 10);
+          if (!isNaN(month) && !isNaN(dayOfMonth)) {
+            datePart = `${month}/${dayOfMonth}`; // e.g., "4/8"
+            // Reconstruct formattedName just in case parsing failed earlier but split worked
+            formattedName = `${dayAbbr} ${datePart}`;
+          }
+        }
+      }
+      return {
+        ...day, // Keep original data
+        dayAbbr: dayAbbr,
+        datePart: datePart,
+        formattedName: formattedName // Used for key
+      };
+    });
+  // -----------------------------------------------------------
+
 
   return (
     <div className="dashboard">
-      {/* Header */}
-      <div className="header" style={{ marginBottom: isMobile ? '8px' : '16px' }}>
-        {!isMobile && (
-          <div className="logo-container">
-            <img src="/images/Neurolens Aligned Eye Blue PNG.png" alt="Neurolens - Relief is in Sight" className="company-logo" />
-          </div>
-        )}
-        <div className="header-text" style={{ textAlign: isMobile ? 'center' : 'left', width: '100%' }}>
-          <h1>{practiceName} - Performance Summary</h1>
-          <p>Date Range: {dateRange}</p>
+      {/* Header - Using CSS Grid */}
+      <div className="header" style={{
+           display: 'grid',
+           gridTemplateColumns: 'auto 1fr auto',
+           alignItems: 'start',
+           gap: isMobile ? '5px' : '10px',
+           padding: isMobile ? '8px 8px' : '8px 16px',
+           marginBottom: isMobile ? '8px' : '16px'
+           }}>
+
+        {/* Left Section (Logo Link - Always Visible) */}
+        <div className="header-left" style={{ /* No flex needed */ }}>
+          <Link to="/all-customers" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+            <img src="/images/Neurolens Aligned Eye Blue PNG.png" alt="Neurolens - Go to All Customers" className="company-logo" title="Go to All Customers" style={{ height: '35px', width: 'auto', display: 'block' }} />
+          </Link>
+        </div>
+
+        {/* Center Section (Text - Reordered) */}
+        <div className="header-center" style={{
+              textAlign: 'center',
+              minWidth: 0 // Allow text wrapping
+             }}>
+          {/* Line 1: Static Title */}
+          <h2 style={{
+              fontSize: isMobile ? '1.0rem' : '1.3rem',
+              margin: '0 0 2px 0', // Small margin below
+              color: '#93c5fd', // Lighter blue for main title
+              fontWeight: '600'
+             }}>
+             Weekly Performance Summary
+          </h2>
+          {/* Line 2: Practice Name */}
+          <p style={{
+             fontSize: isMobile ? '0.9rem' : '1.1rem',
+             margin: '0 0 2px 0', // Small margin below
+             color: '#e2e8f0' // Main text color
+             }}>
+             {practiceName}
+          </p>
+          {/* Line 3: Date Range */}
+          <p style={{ 
+             margin: 0, 
+             fontSize: isMobile ? '0.8rem' : '0.9rem', 
+             color: '#9ca3af' // Subdued color
+             }}>
+             Date Range: {dateRange}
+          </p>
+        </div>
+
+        {/* Right Section (User Button) */}
+        <div className="header-right" style={{ /* No flex needed */ justifySelf: 'end' }}>
+          <UserButton afterSignOutUrl='/login' />
         </div>
       </div>
 
@@ -311,7 +392,6 @@ function App() {
       <div className="card" style={{
         padding: isMobile ? '8px 2px' : '16px',
         marginBottom: isMobile ? '10px' : '16px'
-        // Height is now controlled by Plotly's autosize and container
       }}>
         <h2 style={{
           marginBottom: isMobile ? '6px' : '12px',
@@ -319,14 +399,18 @@ function App() {
         }}>
           High Sx vs <span style={{ color: '#BA4DA5' }}>Orders</span> by Provider
         </h2>
-        {/* Plotly component */}
-        <Plot
-          data={plotlyData}
-          layout={plotlyLayout}
-          config={plotlyConfig}
-          style={{ width: '100%', height: isMobile ? '260px' : '300px' }} // Control height via style
-          useResizeHandler={true} // Ensures chart redraws on container resize
-        />
+        <div style={{
+            position: 'relative',
+            width: '100%'
+          }}>
+          <Plot
+            data={plotlyData}
+            layout={plotlyLayout}
+            config={plotlyConfig}
+            style={{ width: '100%', height: isMobile ? '210px' : '250px' }}
+            useResizeHandler={true}
+          />
+        </div>
       </div>
 
       {/* Prescriber Table with Totals */}
@@ -339,10 +423,10 @@ function App() {
             <thead>
               <tr>
                 <th>Prescriber</th>
-                <th className="center">Measures</th>
-                <th className="center">Portal Views</th>
-                <th className="center">High Sx</th>
-                <th className="center">Orders</th>
+                <th className="col-meas">Meas.</th>
+                <th className="col-portal">Portal Views</th>
+                <th className="col-highsx">High Sx</th>
+                <th className="col-orders">Orders</th>
               </tr>
             </thead>
             <tbody>
@@ -350,62 +434,85 @@ function App() {
               {sortedPrescriberData.map((prescriber, index) => (
                 <tr key={index}>
                   <td>{prescriber.name || 'Unknown'}</td>
-                  <td className="center">{prescriber.measurements || 0}</td>
-                  <td className="center">{prescriber.portalViews || 0}</td>
-                  <td className="center">{prescriber.highSx || 0}</td>
-                  <td className="center">{prescriber.orders || 0}</td>
+                  <td className="col-meas">{prescriber.measurements || 0}</td>
+                  <td className="col-portal">{prescriber.portalViews || 0}</td>
+                  <td className="col-highsx">{prescriber.highSx || 0}</td>
+                  <td className="col-orders">{prescriber.orders || 0}</td>
                 </tr>
               ))}
               {/* "Unknown" row */}
               {hasUnknownOrders && (
                 <tr>
                   <td>Unknown</td>
-                  <td className="center">-</td>
-                  <td className="center">-</td>
-                  <td className="center">-</td>
-                  <td className="center">{unknownOrders}</td>
+                  <td className="col-meas">-</td>
+                  <td className="col-portal">-</td>
+                  <td className="col-highsx">-</td>
+                  <td className="col-orders">{unknownOrders}</td>
                 </tr>
               )}
               {/* Totals row */}
               <tr className="totals">
                 <td>TOTALS</td>
-                <td className="center">{totals.measurements}</td>
-                <td className="center">{totals.portalViews}</td>
-                <td className="center">{totals.highSx}</td>
-                <td className="center">{totals.orders}</td>
+                <td className="col-meas">{totals.measurements}</td>
+                <td className="col-portal">{totals.portalViews}</td>
+                <td className="col-highsx">{totals.highSx}</td>
+                <td className="col-orders">{totals.orders}</td>
               </tr>
             </tbody>
           </table>
         </div>
         <div className="small-text" style={{ fontSize: isMobile ? '0.7rem' : '0.75rem' }}>
-          * Orders placed with SpecCheck typically appear per unique prescriber. Unknown prescriber values are counts for patient measurements not assigned a provider and/or orders not matched to a patient.
+          * Orders placed with SpecCheck typically appear per unique prescriber. "No Prescriber" values are counts for patient measurements not assigned a prescriber in the Neurolens Portal and/or orders we were unable to match to a patient.
         </div>
       </div>
 
-      {/* Daily Activity Waterfall Chart (Recharts - Keep as is for now) */}
+      {/* Daily Performance Summary Table */}
       <div className="card" style={{
-        padding: isMobile ? '10px 4px' : '16px'
+        padding: isMobile ? '10px' : '16px',
+        marginBottom: isMobile ? '10px' : '16px'
       }}>
-        <h2 style={{
-          marginBottom: isMobile ? '6px' : '12px',
-          paddingLeft: isMobile ? '6px' : '0'
-        }}>
-          Daily Activity Trend
+        <h2 style={{ marginBottom: isMobile ? '6px' : '12px' }}>
+          Daily Performance Summary
         </h2>
-        <ResponsiveContainer width="100%" height={isMobile ? 260 : 300}>
-          {/* Ensure Recharts components here use the renamed imports if needed */}
-          <AreaChart data={dailyData} margin={{ top: 20, right: isMobile ? 0 : 30, left: isMobile ? 0 : 20, bottom: 20 }}>
-            <RechartsCartesianGrid strokeDasharray="3 3" stroke="#444" />
-            <RechartsXAxis dataKey="name" tick={{fill: '#aaa'}} />
-            <RechartsYAxis tick={{fill: '#aaa'}} />
-            <RechartsTooltip contentStyle={{ backgroundColor: '#222', borderColor: '#555', fontSize: '12px', padding: '5px 8px', borderRadius: '4px', boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }} labelStyle={{ display: 'none' }} itemStyle={{ color: '#ddd', fontSize: '12px', padding: '2px 0' }} wrapperStyle={{ zIndex: 100 }} formatter={(value) => value || 0} />
-            <RechartsLegend wrapperStyle={{color: '#aaa'}} />
-            <Area type="monotone" dataKey="measurements" name="Measurements" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
-            <Area type="monotone" dataKey="portalViews" name="Portal Views" stroke="#82ca9d" fill="#82ca9d" fillOpacity={0.6} />
-            <Area type="monotone" dataKey="highSx" name="Highly Symptomatic" stroke="#ffc658" fill="#ffc658" fillOpacity={0.6} />
-            <Area type="monotone" dataKey="orders" name="Orders" stroke="#ff8042" fill="#ff8042" fillOpacity={0.6} />
-          </AreaChart>
-        </ResponsiveContainer>
+        <div className="table-container">
+          <table>
+            <thead>
+              <tr>
+                {/* Remove inline center, add class */}
+                <th className="col-day">Day</th>
+                <th className="col-meas">Meas.</th>
+                <th className="col-portal">Portal Views</th>
+                <th className="col-highsx">High Sx</th>
+                <th className="col-orders">Orders</th>
+              </tr>
+            </thead>
+            <tbody>
+              {processedDailyData.length > 0
+                ? processedDailyData.map((day, index) => (
+                    <tr key={day.formattedName || index}>
+                      {/* Remove inline center, add class, conditional rendering */}
+                      <td className="col-day">
+                        {day.dayAbbr}
+                        {/* Add space on desktop, <br /> on mobile */}
+                        {day.datePart && (isMobile ? <><br />{day.datePart}</> : ` ${day.datePart}`)}
+                      </td>
+                      <td className="col-meas">{day.measurements || 0}</td>
+                      <td className="col-portal">{day.portalViews || 0}</td>
+                      <td className="col-highsx">{day.highSx || 0}</td>
+                      <td className="col-orders">{day.orders || 0}</td>
+                    </tr>
+                  ))
+                : (
+                  <tr>
+                    <td colSpan="5" style={{ textAlign: 'center', color: '#9ca3af', padding: '15px' }}>
+                      No daily data available (excluding Sundays).
+                    </td>
+                  </tr>
+                )
+              }
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

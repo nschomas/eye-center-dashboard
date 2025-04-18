@@ -78,7 +78,7 @@ table {
 }
 
 th, td {
-  padding: 8px 12px;
+  padding: 8px 6px;
   text-align: left;
   font-size: 0.875rem;
 }
@@ -92,13 +92,54 @@ td {
   border-bottom: 1px solid #374151;
 }
 
+/* Make table headers normal weight */
+.table-container th {
+  font-weight: normal;
+}
+
+/* Generic center class (still used elsewhere potentially) */
 .center {
   text-align: center;
 }
 
+/* New Column Width & Alignment Classes */
+.col-meas,
+.col-portal,
+.col-highsx,
+.col-orders {
+  width: 16%; /* Assign width to numeric columns */
+  text-align: center;
+  vertical-align: middle; /* Ensure vertical centering too */
+}
+
+/* Style for the Day column */
+.col-day {
+  text-align: left; /* Explicitly set left alignment */
+  vertical-align: middle; /* Keep vertical alignment consistent */
+  /* Width will be implicitly determined by remaining space */
+  padding-left: 16px; /* Add some left padding for better spacing */
+}
+
+/* Ensure the header also gets padding */
+th.col-day {
+  padding-left: 16px;
+}
+
+/* Specific style for the first column header in Daily Summary (if needed) */
+/* (Currently handled by inline styles in App.js) */
+
 .totals {
   background-color: #374151;
   font-weight: bold;
+}
+
+/* Ensure totals row also uses the new classes */
+.totals .col-meas,
+.totals .col-portal,
+.totals .col-highsx,
+.totals .col-orders {
+  font-weight: bold; /* Keep totals bold */
+  /* Inherit width, text-align, vertical-align from base column classes */
 }
 
 .footnote {
@@ -246,10 +287,9 @@ td {
   overflow-x: auto;
 }
 
-/* Remove margin from search-container as it's now part of shared style */
-.search-container {
- /* margin-bottom: 16px; <- Handled by shared style */
-}
+/* Remove empty ruleset */
+/* .search-container {
+} */
 
 /* Update search input to fit within its padded container */
 .search-input {
