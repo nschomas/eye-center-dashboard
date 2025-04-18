@@ -1,10 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { UserButton } from "@clerk/clerk-react";
+import { useUser, UserButton } from "@clerk/clerk-react";
+import { 
+  isMobile, 
+  isTablet, 
+  isDesktop, 
+  osName, 
+  browserName 
+} from 'react-device-detect';
 import './App.css';
 
-// API Endpoint
+// API Endpoint for login tracking
 const API_URL = 'https://prod-08.westus.logic.azure.com:443/workflows/9a9c3f9886a24687ba7fa0f74dfd41b1/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=QOTEpw7_ywfJCkHPo-TMt2mnV4Eb8dd4yUWZLyre86Q';
+
+// Tracking Endpoint URL (Same as in App.js)
+const TRACKING_ENDPOINT_URL = 'https://prod-113.westus.logic.azure.com:443/workflows/ffb0db7884e5468a90b7e64238dab2ce/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=fSb0hor4tIeiqeBxQBtlfSoboAaplvHce3JzgpTr4_8';
 
 function AllCustomersPage() {
   // State for raw data from API, data to display, loading, error, search, and sort
@@ -16,8 +26,9 @@ function AllCustomersPage() {
   const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'ascending' });
   // State to track which customer's SMS is being sent
   const [sendingSmsCustomerId, setSendingSmsCustomerId] = useState(null);
-  // Detect mobile based on window width (assuming this logic exists or add it)
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  // Get user state from Clerk
+  const { user, isSignedIn } = useUser();
 
   // Effect to fetch data on component mount
   useEffect(() => {
@@ -113,13 +124,46 @@ function AllCustomersPage() {
 
   }, [allCustomers, searchTerm, sortConfig]); // Re-run when these change
 
-  // Detect mobile based on window width (assuming this logic exists or add it)
+  // --- useEffect for tracking page views --- 
   useEffect(() => {
-    const handleResize = () => { setWindowWidth(window.innerWidth); };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-  const isMobile = windowWidth <= 768;
+    if (isSignedIn && user) {
+      const userEmail = user.primaryEmailAddress?.emailAddress;
+      
+      // Determine device type using react-device-detect
+      let deviceType = 'unknown'; 
+      if (isMobile) deviceType = 'mobile';
+      else if (isTablet) deviceType = 'tablet';
+      else if (isDesktop) deviceType = 'desktop';
+      
+      const trackingData = {
+        eventType: 'all_customers_view', // Specific event type for this page
+        userId: user.id,
+        userEmail: userEmail, 
+        // No practiceId on this page
+        deviceType: deviceType, 
+        osName: osName, 
+        browserName: browserName, 
+        timestamp: new Date().toISOString()
+      };
+      
+      console.log('Sending tracking data (All Customers):', trackingData); 
+      fetch(TRACKING_ENDPOINT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(trackingData)
+      })
+      .then(response => {
+        if (!response.ok) {
+          console.error('Tracking request failed:', response.status, response.statusText);
+        }
+      })
+      .catch(error => {
+        console.error('Failed to send tracking data:', error);
+      });
+    }
+    // Depends only on user context
+  }, [isSignedIn, user]); 
+  // --------------------------------------
 
   // --- Render Functions ---
 

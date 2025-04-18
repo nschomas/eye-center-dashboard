@@ -25,6 +25,15 @@ import {
 // Import Plotly component
 import Plot from 'react-plotly.js';
 
+// Import from react-device-detect
+import { 
+  isMobile, 
+  isTablet, 
+  isDesktop, 
+  osName, 
+  browserName 
+} from 'react-device-detect';
+
 import './App.css';
 
 // Register Chart.js components
@@ -51,20 +60,6 @@ function App() {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-
-  // Track window width for responsive design
-  useEffect(() => {
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // Check if we're on mobile
-  const isMobile = windowWidth <= 768;
 
   // Use effect to fetch data on component mount or when practiceId changes
   useEffect(() => {
@@ -109,18 +104,29 @@ function App() {
     fetchData();
   }, [practiceId]);
 
-  // --- useEffect for tracking report views (Modified) ---
+  // --- useEffect for tracking report views (Using react-device-detect) ---
   useEffect(() => {
     if (isSignedIn && user && practiceId) {
       const userEmail = user.primaryEmailAddress?.emailAddress;
+      
+      // Determine device type using react-device-detect
+      let deviceType = 'unknown'; 
+      if (isMobile) deviceType = 'mobile';
+      else if (isTablet) deviceType = 'tablet';
+      else if (isDesktop) deviceType = 'desktop';
+      
       const trackingData = {
         eventType: 'report_view',
         userId: user.id,
-        userEmail: userEmail, // Add user email
+        userEmail: userEmail, 
         practiceId: practiceId,
+        deviceType: deviceType, 
+        osName: osName, // Add OS name
+        browserName: browserName, // Add browser name
         timestamp: new Date().toISOString()
       };
-      console.log('Sending tracking data:', trackingData); // Optional: for debugging
+      
+      console.log('Sending tracking data:', trackingData); 
       fetch(TRACKING_ENDPOINT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -135,8 +141,9 @@ function App() {
         console.error('Failed to send tracking data:', error);
       });
     }
+    // Remove windowWidth from dependency array - now depends only on user/page context
   }, [practiceId, isSignedIn, user]);
-  // ---------------------------------------------
+  // -------------------------------------------------------------------
 
   // --- Loading/Error/No Data States ---
   if (loading) return (
