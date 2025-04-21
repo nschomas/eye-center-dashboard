@@ -104,6 +104,19 @@ function App() {
     fetchData();
   }, [practiceId]);
 
+  // Effect to update document title based on practice name
+  useEffect(() => {
+    if (dashboardData && dashboardData.practiceName) {
+      const nameParts = dashboardData.practiceName.split(' ');
+      const lastName = nameParts[nameParts.length - 1];
+      document.title = `${lastName} | Weekly Performance`;
+    }
+    // Reset title if data is not available or component unmounts
+    return () => {
+      document.title = 'Neurolens Weekly Performance'; // Reset to default
+    };
+  }, [dashboardData]); // Rerun when dashboardData changes
+
   // --- useEffect for tracking report views (Using react-device-detect) ---
   useEffect(() => {
     if (isSignedIn && user && practiceId) {
