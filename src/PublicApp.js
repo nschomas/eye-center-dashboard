@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
-// Import useParams, Link
-import { useParams, Link } from 'react-router-dom';
-// Import useUser and UserButton from Clerk
-import { useUser, UserButton } from '@clerk/clerk-react';
-// Remove Recharts BarChart imports if no longer needed by other charts
-// import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-//          ResponsiveContainer, AreaChart, Area, LabelList } from 'recharts';
+// Import useParams, Link (keep Link if needed elsewhere, remove if not used)
+import { useParams /*, Link */ } from 'react-router-dom'; // Link removed as logo link is gone
+// Remove Clerk imports
+// import { useUser, UserButton } from '@clerk/clerk-react';
 
 // Import necessary Chart.js components
 import {
@@ -17,24 +14,20 @@ import {
   Tooltip as ChartJsTooltip, // Renamed to avoid conflict
   Legend as ChartJsLegend // Renamed to avoid conflict
 } from 'chart.js';
-// Remove unused ChartJsBar import
-// import { Bar as ChartJsBar } from 'react-chartjs-2'; // Renamed Bar component
-// Import Recharts components needed for the *other* charts (AreaChart etc.)
-// import { ResponsiveContainer, /* AreaChart, Area, */ XAxis as RechartsXAxis, YAxis as RechartsYAxis, CartesianGrid as RechartsCartesianGrid, Tooltip as RechartsTooltip, Legend as RechartsLegend } from 'recharts'; // Keep necessary Recharts imports
 
 // Import Plotly component
 import Plot from 'react-plotly.js';
 
 // Import from react-device-detect
-import { 
-  isMobile, 
-  isTablet, 
-  isDesktop, 
-  osName, 
-  browserName 
+import {
+  isMobile,
+  isTablet,
+  isDesktop,
+  osName,
+  browserName
 } from 'react-device-detect';
 
-import './App.css';
+import './App.css'; // Keep the same CSS for now
 
 // Register Chart.js components
 ChartJS.register(
@@ -47,24 +40,22 @@ ChartJS.register(
 );
 
 
-// Your Power Automate tracking endpoint URL
+// Your Power Automate tracking endpoint URL - Keep for generic tracking if needed
 const TRACKING_ENDPOINT_URL = 'https://prod-113.westus.logic.azure.com:443/workflows/ffb0db7884e5468a90b7e64238dab2ce/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=fSb0hor4tIeiqeBxQBtlfSoboAaplvHce3JzgpTr4_8';
 
-function App() {
+// Rename component to PublicApp
+function PublicApp() {
   // Get the practiceId from the URL path parameter
   const { practiceId } = useParams();
-  // Get user state from Clerk
-  const { user, isSignedIn } = useUser();
+  // Remove Clerk user state
+  // const { user, isSignedIn } = useUser();
 
-  // State for copy success feedback
-  const [copySuccess, setCopySuccess] = useState(false);
-
-  // Add state hooks for data loading
+  // Add state hooks for data loading (Keep these)
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Use effect to fetch data on component mount or when practiceId changes
+  // Use effect to fetch data on component mount or when practiceId changes (Keep this)
   useEffect(() => {
     const fetchData = async () => {
       // Reset states when starting fetch
@@ -107,7 +98,7 @@ function App() {
     fetchData();
   }, [practiceId]);
 
-  // Effect to update document title based on practice name
+  // Effect to update document title based on practice name (Keep this)
   useEffect(() => {
     if (dashboardData && dashboardData.practiceName) {
       const nameParts = dashboardData.practiceName.split(' ');
@@ -120,29 +111,27 @@ function App() {
     };
   }, [dashboardData]); // Rerun when dashboardData changes
 
-  // --- useEffect for tracking report views (Using react-device-detect) ---
+  // --- useEffect for tracking report views (Modified for public access) ---
   useEffect(() => {
-    if (isSignedIn && user && practiceId) {
-      const userEmail = user.primaryEmailAddress?.emailAddress;
-      
+    // Track view when practiceId is available (no user check)
+    if (practiceId) {
       // Determine device type using react-device-detect
-      let deviceType = 'unknown'; 
+      let deviceType = 'unknown';
       if (isMobile) deviceType = 'mobile';
       else if (isTablet) deviceType = 'tablet';
       else if (isDesktop) deviceType = 'desktop';
-      
+
       const trackingData = {
-        eventType: 'report_view',
-        userId: user.id,
-        userEmail: userEmail, 
+        eventType: 'public_report_view', // Changed eventType
+        // Removed userId and userEmail
         practiceId: practiceId,
-        deviceType: deviceType, 
+        deviceType: deviceType,
         osName: osName, // Add OS name
         browserName: browserName, // Add browser name
         timestamp: new Date().toISOString()
       };
-      
-      console.log('Sending tracking data:', trackingData); 
+
+      console.log('Sending public tracking data:', trackingData);
       fetch(TRACKING_ENDPOINT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -157,27 +146,11 @@ function App() {
         console.error('Failed to send tracking data:', error);
       });
     }
-    // Remove windowWidth from dependency array - now depends only on user/page context
-  }, [practiceId, isSignedIn, user]);
+    // Dependencies updated: only practiceId needed now
+  }, [practiceId]);
   // -------------------------------------------------------------------
 
-  // --- Function to copy current URL ---
-  const handleCopyUrl = () => {
-    // Construct the public URL (replace /dashboard/ with /public-report/)
-    const currentUrl = window.location.href;
-    const publicUrl = currentUrl.replace('/dashboard/', '/public-report/');
-
-    navigator.clipboard.writeText(publicUrl).then(() => {
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 2000); // Reset after 2 seconds
-    }).catch(err => {
-      console.error('Failed to copy URL: ', err);
-      // Optional: Add user feedback for error state here
-    });
-  };
-  // -----------------------------------
-
-  // --- Loading/Error/No Data States ---
+  // --- Loading/Error/No Data States (Keep these) ---
   if (loading) return (
     <div className="loading-container">
       <div className="loading-spinner"></div>
@@ -199,10 +172,10 @@ function App() {
   // ----------------------------------
 
 
-  // Extract data from API response (add checks for potentially missing data)
+  // Extract data from API response (Keep these checks)
   const { practiceName = "Practice", dateRange = "N/A", prescriberData = [], dailyData = [], patientsHelped = 0 } = dashboardData;
 
-  // --- Data Preparation for Charts ---
+  // --- Data Preparation for Charts (Keep this logic) ---
 
   // Filter and sort data specifically for the FIRST chart (High Sx > 0)
   const filteredChartData = [...prescriberData]
@@ -287,7 +260,7 @@ function App() {
       showgrid: true,
       zeroline: false,
       // Increase top padding for labels: use 15% of max value (or at least 2)
-      range: [0, Math.max(2, ...filteredChartData.map(d => d._highSx)) * 1.15] 
+      range: [0, Math.max(2, ...filteredChartData.map(d => d._highSx)) * 1.15]
     },
     uniformtext: { minsize: 8, mode: 'hide' }
   };
@@ -315,7 +288,7 @@ function App() {
     return (b.measurements || 0) - (a.measurements || 0);
   });
 
-  // --- Process Daily Data: Filter, Reformat, and Split ---
+  // --- Process Daily Data: Filter, Reformat, and Split (Keep this logic) ---
   const processedDailyData = dailyData
     .filter(day => day.name && !day.name.toLowerCase().startsWith('sun '))
     .map(day => {
@@ -359,27 +332,32 @@ function App() {
 
   return (
     <div className="dashboard">
-      {/* Header - Using CSS Grid */}
+      {/* Header - Modified CSS Grid for Centering */}
       <div className="header" style={{
            display: 'grid',
-           gridTemplateColumns: 'auto 1fr auto',
-           alignItems: 'start',
+           // Change to a single column layout that spans the full width
+           gridTemplateColumns: '1fr', 
+           alignItems: 'start', // Keep vertical alignment if desired
+           justifyItems: 'center', // Center the grid item (the text block) horizontally
            gap: isMobile ? '5px' : '10px',
            padding: isMobile ? '8px 8px' : '8px 16px',
            marginBottom: isMobile ? '8px' : '16px'
            }}>
 
-        {/* Left Section (Logo Link - Always Visible) */}
-        <div className="header-left" style={{ /* No flex needed */ }}>
+        {/* Left Section (Logo Link - REMOVED) */}
+        {/*
+        <div className="header-left" style={{ // No flex needed // }}>
           <Link to="/all-customers" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
             <img src="/images/Neurolens Aligned Eye Blue PNG.png" alt="Neurolens - Go to All Customers" className="company-logo" title="Go to All Customers" style={{ height: '35px', width: 'auto', display: 'block' }} />
           </Link>
         </div>
+        */}
 
-        {/* Center Section (Text - Reordered) */}
+        {/* Center Section (Text - Now implicitly spans the single column) */}
         <div className="header-center" style={{
-              textAlign: 'center',
+              textAlign: 'center', // Keep text centered within its block
               minWidth: 0 // Allow text wrapping
+              // No gridColumn needed anymore
              }}>
           {/* Line 1: Static Title */}
           <h2 style={{
@@ -399,45 +377,24 @@ function App() {
              {practiceName}
           </p>
           {/* Line 3: Date Range */}
-          <p style={{ 
-             margin: 0, 
-             fontSize: isMobile ? '0.8rem' : '0.9rem', 
+          <p style={{
+             margin: 0,
+             fontSize: isMobile ? '0.8rem' : '0.9rem',
              color: '#9ca3af' // Subdued color
              }}>
              Date Range: {dateRange}
           </p>
-          {/* --- Add Copy URL Button --- */}
-          <button 
-            onClick={handleCopyUrl} 
-            style={{
-              background: 'none',
-              border: '1px solid #60a5fa', // Updated border color to chart blue
-              color: '#60a5fa', // Updated text color to chart blue
-              padding: isMobile ? '2px 6px' : '3px 8px', // Reduced vertical padding
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: isMobile ? '0.7rem' : '0.75rem',
-              marginTop: isMobile ? '5px' : '8px', // Add some space above
-              display: 'inline-block', // Keep it inline block
-              transition: 'background-color 0.2s, color 0.2s, border-color 0.2s' // Added border-color transition
-            }}
-            // Adjust hover colors for new base blue
-            onMouseOver={(e) => { e.currentTarget.style.borderColor = '#93c5fd'; e.currentTarget.style.color = '#93c5fd'; }}
-            onMouseOut={(e) => { e.currentTarget.style.borderColor = '#60a5fa'; e.currentTarget.style.color = '#60a5fa'; }}
-            title="Copy public link for this report"
-          >
-            {copySuccess ? 'Link Copied!' : 'Copy Customer Link'}
-          </button>
-          {/* ------------------------- */}
         </div>
 
-        {/* Right Section (User Button) */}
-        <div className="header-right" style={{ /* No flex needed */ justifySelf: 'end' }}>
-          <UserButton afterSignOutUrl='/login' />
+        {/* Right Section (User Button REMOVED & Placeholder REMOVED) */}
+        {/* 
+        <div className="header-right" style={{ justifySelf: 'end', gridColumn: '2 / 3' }}>
+           <div style={{ width: '32px', height: '32px' }}></div> 
         </div>
+        */}
       </div>
 
-      {/* Plotly.js Overlapping Bar Chart */}
+      {/* Plotly.js Overlapping Bar Chart (Keep this) */}
       <div className="card" style={{
         padding: isMobile ? '8px 2px' : '16px',
         marginBottom: isMobile ? '10px' : '16px'
@@ -462,7 +419,7 @@ function App() {
         </div>
       </div>
 
-      {/* Prescriber Table with Totals */}
+      {/* Prescriber Table with Totals (Keep this) */}
       <div className="card" style={{ padding: isMobile ? '10px' : '16px', marginBottom: isMobile ? '10px' : '16px' }}>
         <h2 style={{ marginBottom: isMobile ? '6px' : '12px' }}>
           Prescriber Performance Summary
@@ -515,7 +472,7 @@ function App() {
         </div>
       </div>
 
-      {/* Daily Performance Summary Table */}
+      {/* Daily Performance Summary Table (Keep this) */}
       <div className="card" style={{
         padding: isMobile ? '10px' : '16px',
         marginBottom: isMobile ? '10px' : '16px'
@@ -579,4 +536,5 @@ function App() {
   );
 }
 
-export default App;
+// Update export
+export default PublicApp; 

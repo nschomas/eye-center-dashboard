@@ -3,6 +3,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { ClerkProvider, SignedIn, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
 import App from './App'; // Your existing dashboard
+import PublicApp from './PublicApp'; // Import the new public component
 import LoginPage from './LoginPage';
 import AllCustomersPage from './AllCustomersPage';
 
@@ -37,6 +38,12 @@ function ClerkProviderWithRoutes() {
               </SignedOut>
             </>
           }
+        />
+
+        {/* Public Report Route - Does not require sign-in */}
+        <Route 
+          path="/public-report/:practiceId" 
+          element={<PublicApp />} 
         />
 
         {/* Login Page Route - Added wildcard */}

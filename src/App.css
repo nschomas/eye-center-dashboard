@@ -278,8 +278,8 @@ th.col-day {
   background-color: #1f2937;
   border-radius: 12px;
   box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.4), inset -2px -2px 5px rgba(255, 255, 255, 0.05);
-  padding: 16px;
-  margin-bottom: 16px; /* Keep margin between them */
+  padding: 8px;
+  margin-bottom: 2px; /* Keep margin between them */
 }
 
 /* Keep table-container specific overflow */
@@ -466,4 +466,25 @@ th.col-day {
 /* Ensure th.center overrides default th alignment */
 .customers-table th.center {
   text-align: center;
+}
+
+.table-container th,
+.table-container td {
+  /* Reduce default vertical padding */
+  padding-top: 8px;    /* Adjust as needed */
+  padding-bottom: 8px; /* Adjust as needed */
+  /* Keep horizontal padding or adjust if necessary */
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+/* Further reduce padding on mobile */
+@media (max-width: 768px) {
+  .table-container th,
+  .table-container td {
+    padding-top: 5px;    /* Even less padding */
+    padding-bottom: 5px; /* Even less padding */
+    padding-left: 4px;
+    padding-right: 4px;
+  }
 }
