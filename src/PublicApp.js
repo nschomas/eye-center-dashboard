@@ -496,11 +496,11 @@ function PublicApp() {
               {processedDailyData.length > 0
                 ? processedDailyData.map((day, index) => (
                     <tr key={day.formattedName || index}>
-                      {/* Remove inline center, add class, conditional rendering */}
+                      {/* Remove inline center, add class, remove conditional line break */}
                       <td className="col-day">
                         {day.dayAbbr}
-                        {/* Add space on desktop, <br /> on mobile */}
-                        {day.datePart && (isMobile ? <><br />{day.datePart}</> : ` ${day.datePart}`)}
+                        {/* Always display date on same line if available */}
+                        {day.datePart && ` ${day.datePart}`}
                       </td>
                       <td className="col-meas">{day.measurements || 0}</td>
                       <td className="col-portal">{day.portalViews || 0}</td>
