@@ -118,6 +118,7 @@ td {
   vertical-align: middle; /* Keep vertical alignment consistent */
   /* Width will be implicitly determined by remaining space */
   padding-left: 16px; /* Add some left padding for better spacing */
+  white-space: nowrap; /* Prevent text wrapping */
 }
 
 /* Ensure the header also gets padding */
