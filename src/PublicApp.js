@@ -403,7 +403,7 @@ function PublicApp() {
           marginBottom: isMobile ? '6px' : '12px',
           paddingLeft: isMobile ? '8px' : '0'
         }}>
-          High Sx vs <span style={{ color: '#BA4DA5' }}>Orders</span> by Provider
+          High Sx vs <span style={{ color: '#BA4DA5' }}>Orders</span> by Prescriber
         </h2>
         <div style={{
             position: 'relative',
