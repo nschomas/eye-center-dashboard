@@ -170,6 +170,45 @@ function App() {
     navigator.clipboard.writeText(publicUrl).then(() => {
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000); // Reset after 2 seconds
+
+      // --- Add tracking logic here ---
+      if (isSignedIn && user && practiceId) {
+        const userEmail = user.primaryEmailAddress?.emailAddress;
+
+        // Determine device type using react-device-detect
+        let deviceType = 'unknown';
+        if (isMobile) deviceType = 'mobile';
+        else if (isTablet) deviceType = 'tablet';
+        else if (isDesktop) deviceType = 'desktop';
+
+        const trackingData = {
+          eventType: 'click_copy_link_button', // New event type
+          userId: user.id,
+          userEmail: userEmail,
+          practiceId: practiceId,
+          deviceType: deviceType,
+          osName: osName,
+          browserName: browserName,
+          timestamp: new Date().toISOString()
+        };
+
+        console.log('Sending copy link click tracking data:', trackingData);
+        fetch(TRACKING_ENDPOINT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(trackingData)
+        })
+        .then(response => {
+          if (!response.ok) {
+            console.error('Tracking request (copy click) failed:', response.status, response.statusText);
+          }
+        })
+        .catch(error => {
+          console.error('Failed to send tracking data (copy click):', error);
+        });
+      }
+      // ---------------------------------
+
     }).catch(err => {
       console.error('Failed to copy URL: ', err);
       // Optional: Add user feedback for error state here
