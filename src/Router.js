@@ -34,7 +34,7 @@ function ClerkProviderWithRoutes() {
               </SignedIn>
               <SignedOut>
                 {/* Redirect to login if trying to access dashboard while signed out */}
-                <RedirectToSignIn redirectUrl={'/login'} />
+                <RedirectToSignIn />
               </SignedOut>
             </>
           }
@@ -58,7 +58,7 @@ function ClerkProviderWithRoutes() {
                 <AllCustomersPage />
               </SignedIn>
               <SignedOut>
-                <RedirectToSignIn redirectUrl={'/login'} />
+                <RedirectToSignIn />
               </SignedOut>
             </>
           }
